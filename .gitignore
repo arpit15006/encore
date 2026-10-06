@@ -22,3 +22,6 @@ spike/out/
 .vscode/
 .idea/
 *.log
+
+# Third-party datasets (licenses forbid bundling; fetched by script)
+data/

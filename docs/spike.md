@@ -77,3 +77,30 @@ This is a usable **generational-fit** feature.
 ## Still to test
 - TV year filters; `qloo_compare_audiences` and `qloo_entity_tags` output shape; explainability fields in insights responses.
 - Quota, rate limit and key expiry (ask on Discord).
+
+---
+
+# Music-era fix — results (Oct 6, 2026)
+
+**Result: 0 too-late artists in the top 10 for all five personas** (9 before re-ranking).
+
+Method ([`spike/era-fix.mjs`](../spike/era-fix.mjs), helpers in [`spike/lib.mjs`](../spike/lib.mjs)):
+1. **Pool from the person's own favorites only:** `qloo api insights` (artist, seed entity IDs, 40 results). No location or age signals.
+2. **Debut year per candidate** from MusicBrainz (CC0 data): the earliest of (first original album/single, band formation year, singer's birth year + 20). The min() matters: MusicBrainz often lists only later reissues for older and non-Western artists (Jorge Negrete showed 2003; he died in 1953).
+3. **Stable re-rank:** in-era first, unknown next (labelled lower confidence), too-late last; Qloo's order kept within each band. "Too late" = debut after the youth window's end + 2 years.
+
+| Persona | Too-late in top 10, before → after | Top of the re-ranked list |
+|---|---|---|
+| P1 Memphis 1942 | 0 → 0 | Tammy Wynette, Kenny Rogers, Roger Miller, Glen Campbell, Gene Autry |
+| P2 Detroit 1945 | 0 → 0 | Stevie Wonder, The Temptations, Otis Redding, Sam Cooke, The Four Tops |
+| P3 Mumbai 1940 | 5 → 0 | Kishore Kumar, Asha Bhosle, Manna Dey, Mukesh, Hemant Kumar |
+| P4 San Antonio 1948 | 0 → 0 | Mariachi Vargas de Tecalitlán, José Alfredo Jiménez, Juan Gabriel, Jorge Negrete, Pedro Infante |
+| P5 Dublin 1938 | 2 → 0 | The Clancy Brothers and Tommy Makem, Peter, Paul & Mary, Frank Patterson, The Kingston Trio |
+
+Building the pool from favorites alone already fixed most drift: with location and age signals (first spike), P1 got Garth Brooks and P4 got Jenni Rivera.
+
+**Known issues / next steps**
+- **Latency:** MusicBrainz allows 1 request/second, so a new person's 40 artists take ~80 s. For the live app, batch-resolve with one Wikidata SPARQL query (CC0) and keep MusicBrainz as a fallback; pre-warm all demo personas.
+- **Bias:** "birth year + 20" estimates early, so borderline late artists can pass (Marco Antonio Solís, 1979, for a 1978 window end). Compare against the 55+ skew from `qloo_audience_demographics` in the full evaluation.
+- **Alias duplicates:** "Mohd Rafi" appeared although "Mohammed Rafi" was a seed. Deduplicate against seeds by entity ID and by name variants.
+- MusicBrainz lookups must retry on 503 and never cache failures (fixed in `lib.mjs`).
