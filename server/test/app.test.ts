@@ -56,3 +56,37 @@ describe("health routes", () => {
     await app.close();
   });
 });
+
+describe("serving the web app", () => {
+  it("loads the app for client routes but 404s missing files and API paths", async () => {
+    const { mkdtempSync, writeFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const dist = mkdtempSync(join(tmpdir(), "encore-web-"));
+    writeFileSync(join(dist, "index.html"), "<!doctype html><title>app</title>");
+    const app = await buildApp({ qloo: fakeQloo(), store: noLog, rateLimitPerMinute: 100, webDist: dist, logger: false });
+    writeFileSync(join(dist, "late.js"), "console.log(1)"); // added after startup, like a rebuild
+    expect((await app.inject({ url: "/demo" })).body).toContain("<title>app</title>");
+    expect((await app.inject({ url: "/late.js" })).statusCode).toBe(200);
+    expect((await app.inject({ url: "/assets/missing-abc123.js" })).statusCode).toBe(404);
+    expect((await app.inject({ url: "/api/nope" })).statusCode).toBe(404);
+    await app.close();
+  });
+
+  it("never rate-limits pages and assets, only the API", async () => {
+    const { mkdtempSync, writeFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const { tmpdir } = await import("node:os");
+    const dist = mkdtempSync(join(tmpdir(), "encore-web-"));
+    writeFileSync(join(dist, "index.html"), "<!doctype html><title>app</title>");
+    writeFileSync(join(dist, "app.js"), "console.log(1)");
+    const app = await buildApp({ qloo: fakeQloo(), store: noLog, rateLimitPerMinute: 2, webDist: dist, logger: false });
+    const pageCodes = [];
+    for (let i = 0; i < 6; i++) pageCodes.push((await app.inject({ url: i % 2 ? "/app.js" : "/demo" })).statusCode);
+    expect(pageCodes.every((code) => code === 200)).toBe(true);
+    const apiCodes = [];
+    for (let i = 0; i < 3; i++) apiCodes.push((await app.inject({ url: "/api/health/qloo" })).statusCode);
+    expect(apiCodes).toEqual([200, 200, 429]);
+    await app.close();
+  });
+});

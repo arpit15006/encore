@@ -5,8 +5,10 @@ FROM node:24-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY server/package.json server/
+COPY web/package.json web/
 RUN npm ci
 COPY server/ server/
+COPY web/ web/
 RUN npm run build && npm prune --omit=dev
 
 FROM node:24-slim
@@ -19,6 +21,7 @@ COPY --from=build --chown=node:node /app/package.json ./
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/server/package.json server/
 COPY --from=build --chown=node:node /app/server/dist server/dist
+COPY --from=build --chown=node:node /app/web/dist web/dist
 RUN mkdir -p /app/var && chown node:node /app/var
 USER node
 # Hackathon keys only work against the hackathon API; the harness defaults to production.

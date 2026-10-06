@@ -3,13 +3,19 @@
   "private": true,
   "description": "Encore: taste-grounded, familiarity-first activities for dementia and elder care, powered by Qloo.",
   "license": "MIT",
-  "workspaces": ["server"],
-  "engines": { "node": ">=22.19.0" },
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
   "scripts": {
     "dev": "npm run dev --workspace server",
-    "build": "npm run build --workspace server",
+    "dev:web": "npm run dev --workspace web",
+    "build": "npm run build --workspace web && npm run build --workspace server",
     "start": "npm run start --workspace server",
     "test": "npm test --workspace server",
-    "typecheck": "npm run typecheck --workspace server"
+    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web"
   }
 }
