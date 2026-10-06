@@ -25,3 +25,6 @@ spike/out/
 
 # Third-party datasets (licenses forbid bundling; fetched by script)
 data/
+
+# Local runtime data (SQLite cache)
+var/
