@@ -11,9 +11,11 @@ function fakeQloo(overrides: Partial<QlooClient> = {}): QlooClient {
   } as unknown as QlooClient;
 }
 
+const noLog = { requestsFor: () => [] };
+
 describe("health routes", () => {
   it("never rate-limits the platform health check", async () => {
-    const app = await buildApp({ qloo: fakeQloo(), rateLimitPerMinute: 2, logger: false });
+    const app = await buildApp({ qloo: fakeQloo(), store: noLog, rateLimitPerMinute: 2, logger: false });
     const codes = [];
     for (let i = 0; i < 5; i++) codes.push((await app.inject({ url: "/api/health" })).statusCode);
     expect(codes).toEqual([200, 200, 200, 200, 200]);
@@ -21,7 +23,7 @@ describe("health routes", () => {
   });
 
   it("rate-limits other API routes per visitor", async () => {
-    const app = await buildApp({ qloo: fakeQloo(), rateLimitPerMinute: 2, logger: false });
+    const app = await buildApp({ qloo: fakeQloo(), store: noLog, rateLimitPerMinute: 2, logger: false });
     const codes = [];
     for (let i = 0; i < 3; i++) codes.push((await app.inject({ url: "/api/health/qloo" })).statusCode);
     expect(codes).toEqual([200, 200, 429]);
@@ -31,6 +33,7 @@ describe("health routes", () => {
   it("reports 503 when the Qloo credential is not ready", async () => {
     const app = await buildApp({
       qloo: fakeQloo({ capabilities: async () => ({ ready: false, toolCount: 10, detail: {} }) }),
+      store: noLog,
       rateLimitPerMinute: 10,
       logger: false,
     });
@@ -43,6 +46,7 @@ describe("health routes", () => {
   it("reports the live check's Qloo status without leaking details", async () => {
     const app = await buildApp({
       qloo: fakeQloo({ call: async () => normalizeEnvelope({ status: "error", error: { code: "UNAUTHORIZED", retryable: false } }) }) as QlooClient,
+      store: noLog,
       rateLimitPerMinute: 10,
       logger: false,
     });

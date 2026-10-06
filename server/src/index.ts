@@ -6,7 +6,7 @@ import { QlooStore } from "./qloo/store.js";
 const config = loadConfig();
 const store = new QlooStore(config.DATA_DIR);
 const qloo = new QlooClient(store);
-const app = await buildApp({ qloo, rateLimitPerMinute: config.RATE_LIMIT_PER_MINUTE });
+const app = await buildApp({ qloo, store, rateLimitPerMinute: config.RATE_LIMIT_PER_MINUTE });
 
 // Readiness at boot, per the kit's backend pattern. A missing credential is logged, not fatal,
 // so the health endpoint can report it.

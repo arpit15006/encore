@@ -1,3 +1,5 @@
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { normalizeEnvelope, isCacheable, shouldRetry, type QlooEnvelope } from "./envelope.js";
@@ -28,6 +30,30 @@ export interface QlooCallOptions {
 }
 
 const MAX_RETRIES = 2;
+const execFileAsync = promisify(execFile);
+
+/** Entity types Encore requests from the Insights API. */
+export type InsightsType = "artist" | "movie" | "tv_show" | "book" | "person";
+
+export interface InsightsRequest {
+  type: InsightsType;
+  signalIds: string[];
+  take: number;
+  /** Raw Insights parameters, e.g. `filter.release_year.min` or `feature.explainability`. */
+  params?: Record<string, string | number | boolean>;
+}
+
+/** The parts of a Qloo entity Encore reads. Qloo returns more; unknown fields are ignored. */
+export interface QlooEntity {
+  entity_id: string;
+  name: string;
+  popularity?: number;
+  properties?: Record<string, unknown>;
+  query?: {
+    affinity?: number;
+    explainability?: { "signal.interests.entities"?: Array<{ entity_id: string; score: number }> };
+  };
+}
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -82,6 +108,25 @@ export class QlooClient {
   }
 
   async call<T = unknown>(tool: QlooToolName, args: Record<string, unknown>, options: QlooCallOptions): Promise<QlooEnvelope<T>> {
+    return this.execute<T>(tool, args, options, () => this.callOnce<T>(tool, args));
+  }
+
+  /**
+   * Raw Insights request through the harness (`qloo api insights --params`), for parameters the
+   * workflows don't expose: release-year windows, explainability, larger result pages.
+   */
+  async insights<T = QlooEntity>(request: InsightsRequest, options: QlooCallOptions): Promise<QlooEnvelope<T>> {
+    const args = { type: request.type, signals: request.signalIds, take: request.take, params: request.params ?? {} };
+    return this.execute<T>("insights", args, options, () => this.insightsOnce<T>(request));
+  }
+
+  /** Shared path for every Qloo request: cache, bounded retries, request log. */
+  private async execute<T>(
+    tool: string,
+    args: Record<string, unknown>,
+    options: QlooCallOptions,
+    once: () => Promise<QlooEnvelope<T>>,
+  ): Promise<QlooEnvelope<T>> {
     const cached = this.store.getCached(tool, args);
     if (cached !== undefined) {
       const envelope = normalizeEnvelope<T>(cached);
@@ -92,13 +137,34 @@ export class QlooClient {
     let envelope: QlooEnvelope<T> = normalizeEnvelope<T>(undefined);
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       if (attempt > 0) await sleep(500 * 2 ** (attempt - 1));
-      envelope = await this.callOnce<T>(tool, args);
+      envelope = await once();
       if (!shouldRetry(envelope)) break;
     }
 
     this.store.logRequest({ scope: options.scope, tool, args, status: envelope.status, cacheHit: false });
     if (isCacheable(envelope)) this.store.putCached(tool, args, envelope.raw, envelope.status);
     return envelope;
+  }
+
+  private async insightsOnce<T>(request: InsightsRequest): Promise<QlooEnvelope<T>> {
+    const cliArgs = ["api", "insights", "-t", request.type, "-s", request.signalIds.join(","), "-n", String(request.take)];
+    cliArgs.push("--params", JSON.stringify(request.params ?? {}), "--json");
+    try {
+      const { stdout } = await execFileAsync("qloo", cliArgs, { env: process.env, maxBuffer: 64 * 1024 * 1024, timeout: 30_000 });
+      const parsed: unknown = JSON.parse(stdout);
+      // The raw endpoint returns a bare list of entities; wrap it in the kit's envelope shape.
+      if (Array.isArray(parsed)) return normalizeEnvelope<T>({ status: "ok", results: parsed, result_count: parsed.length });
+      return normalizeEnvelope<T>(parsed);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Never echo the API key, even if the CLI includes it in an error.
+      const summary = (process.env.QLOO_API_KEY ? message.split(process.env.QLOO_API_KEY).join("<redacted>") : message).slice(0, 300);
+      return normalizeEnvelope<T>({
+        status: "error",
+        summary,
+        error: { code: "INSIGHTS_FAILED", retryable: /429|5\d\d|timed? ?out|ETIMEDOUT|ECONNRESET/i.test(message) },
+      });
+    }
   }
 
   private async callOnce<T>(tool: QlooToolName, args: Record<string, unknown>): Promise<QlooEnvelope<T>> {
