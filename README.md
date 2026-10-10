@@ -9,6 +9,8 @@ Encore is a care-team agent for dementia and elder care. A family describes what
 - [The problem](#the-problem)
 - [The idea: familiarity, not novelty](#the-idea-familiarity-not-novelty)
 - [What Encore does](#what-encore-does)
+- [Who pays](#who-pays)
+- [How the agent works](#how-the-agent-works)
 - [What makes Encore Qloo-powered](#what-makes-encore-qloo-powered)
 - [A request, start to finish](#a-request-start-to-finish)
 - [Evaluation on real people](#evaluation-on-real-people)
@@ -52,6 +54,35 @@ The landing page offers two doors: **try it on someone you love**, or **a 90-sec
 |---|---|
 | ![Memory Box](docs/screenshots/memory-box.png) | ![Visit Kit in Hindi on a phone](docs/screenshots/visit-kit-hindi.png) |
 | ![Group session setlist](docs/screenshots/group-setlist.png) | ![Evaluation page](docs/screenshots/evaluation.png) |
+
+## Who pays
+
+- **Buyer:** activity directors at US nursing homes and memory-care communities. There are 14,742 CMS-certified nursing homes with about 1.24 million residents ([KFF, July 2025](https://www.kff.org/medicaid/a-look-at-nursing-facility-characteristics/)) and about 32,000 assisted-living and residential-care communities ([A Place for Mom, citing NCHS 2022](https://aplaceformom.com/senior-living-data/assisted-living-statistics)).
+- **Why they pay:** they already have to deliver person-centered activities (F679) and record preferences (MDS Section F). Encore turns a family interview into a ready plan in seconds instead of hand-building playlists, and its reactions log documents what landed. (Encore supports that work; it doesn't certify compliance.)
+- **Pricing (proposal):** per resident per month. For scale, at $3 per resident per month, US nursing homes alone would be about $45 million a year (1.24 million × $3 × 12). That's illustrative arithmetic, not a forecast.
+- **Growth loop:** Visit Kits are free for families. A family that uses one before visiting is the natural person to bring Encore to their relative's care home.
+- **Path to production:** HIPAA business-associate and facility data agreements, and integration with the care home's own records. Not built in this demo, which stores no real people's data.
+
+## How the agent works
+
+Encore's agent turns a family's words into a plan, using Qloo as its source of truth and asking a person whenever a match is uncertain.
+
+```mermaid
+flowchart TD
+  A["Family's own words<br/>'She grew up in Pune, loved Lata and Mughal-e-Azam…'"] --> B["Understand (AI model)<br/>birth year · places · favorites<br/>names and health details dropped"]
+  B --> C["Resolve (qloo_describe)<br/>exact match + alternatives"]
+  C --> D{"Family confirms<br/>each match"}
+  D -->|"needs_input / no match"| C
+  D -->|confirmed IDs| E["Plan<br/>youth window = birth year + 10 to + 30"]
+  E --> F["Ask Qloo (Insights)<br/>artists · films and TV in the window<br/>explainability · exclusions"]
+  F --> G["Re-rank and check<br/>Qloo start_year · lower-confidence flags<br/>trace of every step"]
+  G --> H["Act<br/>Memory Box · Visit Kit with tag-grounded starters · group setlist"]
+  H --> I["Observe reactions<br/>lit up · calm · no response · distressed"]
+  I -->|"hits become signals,<br/>distress becomes exclusions"| E
+  H --> J["Ask Encore<br/>tool-using agent over Qloo MCP<br/>location/age signals removed"]
+```
+
+Every arrow into Qloo is cached, logged as sent (the "What Qloo sees" panel) and handled for all six statuses.
 
 ## What makes Encore Qloo-powered
 
