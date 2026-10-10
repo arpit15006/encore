@@ -1,5 +1,6 @@
-import { AlertTriangle, BookOpen, ChevronDown, Database, ExternalLink } from "lucide-react";
-import type { MemoryItem } from "../api";
+import { AlertTriangle, BookOpen, ChevronDown, Database, ExternalLink, Frown, Meh, Smile, Sparkles } from "lucide-react";
+import { useState } from "react";
+import type { MemoryItem, ReactionValue } from "../api";
 import { appleMusicSearch, youTubeSearch } from "../listen";
 
 const pct = (share: number) => `${Math.round(share * 100)}%`;
@@ -17,13 +18,56 @@ function evidenceSentence(item: MemoryItem): string {
   return `People who share ${all} of their favorites often enjoy this.`;
 }
 
-export function MemoryCard({ item }: { item: MemoryItem }) {
+const REACTIONS: Array<{ value: ReactionValue; label: string; icon: typeof Smile }> = [
+  { value: "lit_up", label: "Lit up", icon: Sparkles },
+  { value: "calm", label: "Calm", icon: Smile },
+  { value: "none", label: "No response", icon: Meh },
+  { value: "distressed", label: "Distressed", icon: Frown },
+];
+
+/** One-tap reactions for staff mid-session. Big targets; the pressed state is announced. */
+function ReactionButtons({ name, onReact }: { name: string; onReact: (value: ReactionValue) => Promise<void> }) {
+  const [saving, setSaving] = useState<ReactionValue>();
+  const [saved, setSaved] = useState<ReactionValue>();
+  return (
+    <div className="reactions" role="group" aria-label={`How did they respond to ${name}?`}>
+      {REACTIONS.map(({ value, label, icon: Icon }) => (
+        <button
+          key={value}
+          className="reaction"
+          data-value={value}
+          aria-pressed={saved === value}
+          disabled={saving !== undefined}
+          onClick={async () => {
+            setSaving(value);
+            try {
+              await onReact(value);
+              setSaved(value);
+            } finally {
+              setSaving(undefined);
+            }
+          }}
+        >
+          <Icon aria-hidden="true" size={20} />
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function MemoryCard({ item, onReact }: { item: MemoryItem; onReact?: (value: ReactionValue) => Promise<void> }) {
   const { qloo, interpretation } = item;
   const late = interpretation.band === "too_late";
 
   return (
-    <li className="memory-card" data-band={interpretation.band}>
+    <li className="memory-card" data-band={interpretation.band} data-pinned={item.reaction ? "true" : undefined}>
       <div className="memory-card-title">
+        {item.reaction && (
+          <span className="pinned-badge">
+            <Sparkles aria-hidden="true" size={14} /> {item.reaction === "lit_up" ? "Lit up last time" : "Calm last time"}
+          </span>
+        )}
         <h3>{item.name}</h3>
       </div>
 
@@ -40,7 +84,7 @@ export function MemoryCard({ item }: { item: MemoryItem }) {
           <Database aria-hidden="true" size={16} />
           From Qloo
         </div>
-        <p>{evidenceSentence(item)}</p>
+        <p>{item.reaction ? "Known to land well. Qloo now also uses it as a signal for new picks." : evidenceSentence(item)}</p>
         {qloo.notableSongs && (
           <ul className="songs" aria-label={`Songs Qloo lists for ${item.name}`}>
             {qloo.notableSongs.map((song) => (
@@ -82,6 +126,7 @@ export function MemoryCard({ item }: { item: MemoryItem }) {
           </a>
         </div>
       )}
+      {onReact && <ReactionButtons name={item.name} onReact={onReact} />}
     </li>
   );
 }

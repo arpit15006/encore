@@ -1,6 +1,7 @@
-import { ArrowLeft, Loader2, Lock, Plus, X } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, Plus, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { ApiError, resolveFavorites, type Candidate, type Favorite, type FavoriteKind, type LoggedRequest, type Person, type Resolution } from "../api";
+import { api, ApiError, type Candidate, type Favorite, type FavoriteKind, type LoggedRequest, type Resolution } from "../api";
+import { navigate } from "../router";
 import { Notice } from "../components/Notice";
 import { WhatQlooSees } from "../components/WhatQlooSees";
 
@@ -9,6 +10,7 @@ const GROUPS: Array<{ kind: FavoriteKind; label: string; hint: string }> = [
   { kind: "film", label: "Films", hint: "For example: The Sound of Music, Mother India" },
   { kind: "tv", label: "TV shows", hint: "For example: Bonanza, I Love Lucy" },
   { kind: "star", label: "Film or TV stars", hint: "For example: Audrey Hepburn, Dilip Kumar" },
+  { kind: "book", label: "Books or authors", hint: "For example: Agatha Christie, Gone with the Wind" },
 ];
 const MAX_FAVORITES = 10;
 const NONE = "none";
@@ -41,10 +43,16 @@ function optionsFor(resolution: Resolution): Candidate[] {
   return [];
 }
 
-export function Intake({ onDone }: { onDone: (person: Person) => void }) {
+export function Intake() {
   const [step, setStep] = useState<"about" | "confirm">("about");
   const [birthYear, setBirthYear] = useState("");
   const [grewUp, setGrewUp] = useState("");
+  const [livesIn, setLivesIn] = useState("");
+  const [story, setStory] = useState("");
+  const [interpreting, setInterpreting] = useState(false);
+  const [interpreted, setInterpreted] = useState<{ count: number; leftOut: string[] }>();
+  const [interpretError, setInterpretError] = useState<string>();
+  const [saving, setSaving] = useState(false);
   const [drafts, setDrafts] = useState<Drafts>(EMPTY_DRAFTS);
   const [errors, setErrors] = useState<{ birthYear?: string; favorites?: string }>({});
   const [loading, setLoading] = useState(false);
@@ -76,6 +84,26 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
     return Number.isInteger(year) && year >= 1915 && year <= CURRENT_YEAR - 40 ? undefined : `Enter a year between 1915 and ${CURRENT_YEAR - 40}.`;
   };
 
+  /** Encore's agent reads the family's own words and fills in the form; nothing is final until confirmed. */
+  async function fillFromStory() {
+    setInterpreting(true);
+    setInterpretError(undefined);
+    try {
+      const result = await api.interpret(story);
+      if (result.birthYear) setBirthYear(String(result.birthYear));
+      if (result.grewUp) setGrewUp(result.grewUp);
+      const next: Drafts = { music: [], film: [], tv: [], star: [], book: [] };
+      for (const favorite of result.favorites) next[favorite.kind].push(favorite.text);
+      for (const { kind } of GROUPS) if (!next[kind].length) next[kind] = kind === "star" || kind === "book" ? [] : [""];
+      setDrafts(next);
+      setInterpreted({ count: result.favorites.length, leftOut: result.leftOut });
+    } catch (error) {
+      setInterpretError(error instanceof ApiError ? error.message : "Encore couldn't read that. Please fill in the form below.");
+    } finally {
+      setInterpreting(false);
+    }
+  }
+
   async function findThem(event: FormEvent) {
     event.preventDefault();
     const nextErrors: typeof errors = {};
@@ -92,7 +120,7 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
     setLoading(true);
     setRequestError(undefined);
     try {
-      const response = await resolveFavorites(filled);
+      const response = await api.resolveFavorites(filled);
       setResolutions(response.results);
       setSent(response.whatQlooSaw);
       // Pre-select exact matches; ambiguous ones wait for the user's choice.
@@ -108,7 +136,7 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
 
   const needsChoice = resolutions.some((result, index) => (result.status === "resolved" || result.status === "choose") && !choices[index]);
 
-  function continueToBox() {
+  async function continueToBox() {
     const favorites: Favorite[] = [];
     resolutions.forEach((result, index) => {
       const choice = choices[index];
@@ -121,7 +149,19 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
       setRequestError("Confirm at least one favorite to build their Memory Box.");
       return;
     }
-    onDone({ birthYear: Number(birthYear), ...(grewUp.trim() ? { grewUp: grewUp.trim() } : {}), favorites });
+    setSaving(true);
+    try {
+      const { id } = await api.createResident({
+        birthYear: Number(birthYear),
+        ...(grewUp.trim() ? { grewUp: grewUp.trim() } : {}),
+        ...(livesIn.trim() ? { livesIn: livesIn.trim() } : {}),
+        favorites,
+      });
+      navigate(`/r/${id}`);
+    } catch (error) {
+      setRequestError(error instanceof ApiError ? error.message : "Something went wrong. Please try again.");
+      setSaving(false);
+    }
   }
 
   if (step === "confirm") {
@@ -219,7 +259,8 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
           <button className="btn btn-quiet" onClick={() => setStep("about")}>
             <ArrowLeft aria-hidden="true" size={20} /> Edit favorites
           </button>
-          <button className="btn btn-primary" onClick={continueToBox} disabled={needsChoice}>
+          <button className="btn btn-primary" onClick={continueToBox} disabled={needsChoice || saving}>
+            {saving ? <Loader2 className="spin" aria-hidden="true" size={20} /> : null}
             Build their Memory Box
           </button>
         </div>
@@ -264,6 +305,48 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
         </p>
       </div>
 
+      <section className="form-section" aria-labelledby="story-heading">
+        <h2 id="story-heading">
+          <Wand2 aria-hidden="true" size={24} style={{ verticalAlign: "-3px", marginRight: 8 }} />
+          Describe them in your own words
+        </h2>
+        <div className="field" style={{ marginBottom: "var(--space-3)" }}>
+          <label htmlFor="story">Optional: Encore's agent will fill in the form below for you to check.</label>
+          <textarea
+            id="story"
+            className="input textarea"
+            rows={4}
+            maxLength={2000}
+            value={story}
+            onChange={(event) => setStory(event.target.value)}
+            aria-describedby="story-hint"
+            placeholder="She was born in 1940 and grew up in Pune. She loved Lata Mangeshkar and Kishore Kumar, and the film Mughal-e-Azam…"
+          />
+          <span id="story-hint" className="hint">
+            This text goes to Encore's AI model only, never to Qloo. Names and health details are left out automatically.
+          </span>
+        </div>
+        <button type="button" className="btn btn-quiet" onClick={fillFromStory} disabled={interpreting || story.trim().length < 10}>
+          {interpreting ? <Loader2 className="spin" aria-hidden="true" size={20} /> : <Wand2 aria-hidden="true" size={20} />}
+          {interpreting ? "Reading…" : "Fill in the form for me"}
+        </button>
+        <div aria-live="polite">
+          {interpreted && (
+            <Notice tone="info">
+              <p>
+                Encore found {interpreted.count} {interpreted.count === 1 ? "favorite" : "favorites"}. Please check the form below.
+                {interpreted.leftOut.length ? ` It left out ${interpreted.leftOut.join(", ")}.` : ""}
+              </p>
+            </Notice>
+          )}
+          {interpretError && (
+            <Notice tone="error">
+              <p>{interpretError}</p>
+            </Notice>
+          )}
+        </div>
+      </section>
+
       <section className="form-section" aria-labelledby="about-heading">
         <h2 id="about-heading">About them</h2>
         <div className="field">
@@ -293,6 +376,13 @@ export function Intake({ onDone }: { onDone: (person: Person) => void }) {
           <input id="grew-up" className="input" autoComplete="off" value={grewUp} onChange={(event) => setGrewUp(event.target.value)} aria-describedby="grew-up-hint" />
           <span id="grew-up-hint" className="hint">
             A city or country. It helps tell their story on screen and is not sent to Qloo.
+          </span>
+        </div>
+        <div className="field" style={{ marginBottom: 0, marginTop: "var(--space-5)" }}>
+          <label htmlFor="lives-in">Where they live now (optional)</label>
+          <input id="lives-in" className="input" autoComplete="off" value={livesIn} onChange={(event) => setLivesIn(event.target.value)} aria-describedby="lives-in-hint" />
+          <span id="lives-in-hint" className="hint">
+            City only. Used only on the comparison page, to show what a naive approach would pick.
           </span>
         </div>
       </section>

@@ -1,18 +1,24 @@
 import { CircleCheck, Film, Loader2, Music, RotateCcw, Tv } from "lucide-react";
-import { SectionTabs } from "../components/SectionTabs";
-import { useEffect, useRef, useState } from "react";
-import { ApiError, buildMemoryBox, type MemoryBox as Box, type MemorySection, type Person, type SectionKind } from "../api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api, ApiError, type MemoryBox as Box, type MemoryItem, type MemorySection, type ReactionValue, type SectionKind } from "../api";
+import { AskEncore } from "../components/AskEncore";
+import { DecisionTrace } from "../components/DecisionTrace";
 import { MemoryCard } from "../components/MemoryCard";
 import { Notice } from "../components/Notice";
+import { ResidentHeader } from "../components/ResidentHeader";
+import { SectionTabs } from "../components/SectionTabs";
+import { SimilarThemesDialog } from "../components/SimilarThemesDialog";
 import { Timeline } from "../components/Timeline";
 import { WhatQlooSees } from "../components/WhatQlooSees";
-import { navigate } from "../router";
+import { useResident } from "../useResident";
 
 const SECTION_COPY: Record<SectionKind, { title: string; icon: typeof Music; noun: string }> = {
   music: { title: "Music", icon: Music, noun: "singers or bands" },
   films: { title: "Films", icon: Film, noun: "films" },
   tv: { title: "TV", icon: Tv, noun: "TV shows" },
 };
+
+const REACTION_WORDS: Record<ReactionValue, string> = { lit_up: "lit up", calm: "calm", none: "no response", distressed: "distressed" };
 
 function SectionStatus({ section }: { section: MemorySection }) {
   const noun = SECTION_COPY[section.kind].noun;
@@ -21,6 +27,12 @@ function SectionStatus({ section }: { section: MemorySection }) {
       return (
         <Notice tone="info">
           <p>Qloo didn't find {noun} from their youth for these favorites. Adding another favorite often helps.</p>
+        </Notice>
+      );
+    case "needs_input":
+      return (
+        <Notice tone="info">
+          <p>Qloo needs more to go on for {noun}. {section.summary}</p>
         </Notice>
       );
     case "error":
@@ -45,7 +57,7 @@ function SectionStatus({ section }: { section: MemorySection }) {
 
 const PAGE_SIZE = 6;
 
-function Section({ section }: { section: MemorySection }) {
+function Section({ section, onReact }: { section: MemorySection; onReact: (item: MemoryItem, value: ReactionValue) => Promise<void> }) {
   const { noun } = SECTION_COPY[section.kind];
   const [shown, setShown] = useState(PAGE_SIZE);
   const remaining = section.items.length - shown;
@@ -63,7 +75,7 @@ function Section({ section }: { section: MemorySection }) {
       {section.items.length > 0 && (
         <ul className="cards">
           {section.items.slice(0, shown).map((item) => (
-            <MemoryCard key={item.entityId} item={item} />
+            <MemoryCard key={item.entityId} item={item} onReact={(value) => onReact(item, value)} />
           ))}
         </ul>
       )}
@@ -85,13 +97,7 @@ function Progress({ step }: { step: number }) {
       <ol>
         {STEPS.map((label, index) => (
           <li key={label} data-state={index < step ? "done" : index === step ? "active" : "waiting"}>
-            {index < step ? (
-              <CircleCheck aria-hidden="true" size={22} />
-            ) : index === step ? (
-              <Loader2 className="spin" aria-hidden="true" size={22} />
-            ) : (
-              <span style={{ width: 22 }} />
-            )}
+            {index < step ? <CircleCheck aria-hidden="true" size={22} /> : index === step ? <Loader2 className="spin" aria-hidden="true" size={22} /> : <span style={{ width: 22 }} />}
             {label}
           </li>
         ))}
@@ -100,71 +106,94 @@ function Progress({ step }: { step: number }) {
   );
 }
 
-export function MemoryBoxScreen({ person }: { person: Person }) {
+export function MemoryBoxScreen({ residentId, openTrace = false }: { residentId: string; openTrace?: boolean }) {
+  const { view, error: viewError, reload } = useResident(residentId);
   const [box, setBox] = useState<Box>();
   const [error, setError] = useState<string>();
   const [step, setStep] = useState(0);
-  const [attempt, setAttempt] = useState(0);
+  const [updating, setUpdating] = useState(false);
+  const [status, setStatus] = useState<string>();
+  const [themes, setThemes] = useState<{ item: MemoryItem; options: Array<{ id: string; name: string }> }>();
   const [tab, setTab] = useState<SectionKind>("music");
   const headingRef = useRef<HTMLHeadingElement>(null);
 
+  const load = useCallback(async () => {
+    try {
+      setBox(await api.memoryBox(residentId));
+    } catch (caught) {
+      setError(caught instanceof ApiError ? caught.message : "Something went wrong. Please try again.");
+    }
+  }, [residentId]);
+
   useEffect(() => {
-    let cancelled = false;
     setBox(undefined);
     setError(undefined);
     setStep(0);
     // The steps describe the real work in order; the request runs while they advance.
     const timers = [setTimeout(() => setStep(1), 600), setTimeout(() => setStep(2), 2600)];
-    buildMemoryBox(person)
-      .then((result) => !cancelled && setBox(result))
-      .catch((caught) => !cancelled && setError(caught instanceof ApiError ? caught.message : "Something went wrong. Please try again."))
-      .finally(() => timers.forEach(clearTimeout));
-    return () => {
-      cancelled = true;
-      timers.forEach(clearTimeout);
-    };
-  }, [person, attempt]);
+    void load().finally(() => timers.forEach(clearTimeout));
+    return () => timers.forEach(clearTimeout);
+  }, [load]);
 
   useEffect(() => {
-    if (box) headingRef.current?.focus();
-  }, [box]);
+    // Focus the heading only when the box first appears, not after each reaction.
+    if (box && !updating) headingRef.current?.focus();
+  }, [Boolean(box)]);
 
-  if (error) {
+  async function react(item: MemoryItem, value: ReactionValue) {
+    const result = await api.react(residentId, value, item);
+    setStatus(`Saved: ${item.name}, ${REACTION_WORDS[value]}. Updating the plan…`);
+    if (value === "distressed" && result.similarThemes.length) setThemes({ item, options: result.similarThemes });
+    await refresh(value === "distressed" ? `${item.name} won't be suggested again.` : value === "none" ? `Noted. "No response" doesn't change the plan.` : `${item.name} is now pinned and helps Qloo find more like it.`);
+  }
+
+  async function refresh(message: string) {
+    setUpdating(true);
+    await load();
+    reload();
+    setUpdating(false);
+    setStatus(`Plan updated. ${message}`);
+  }
+
+  async function avoidThemes(chosen: Array<{ id: string; name: string }>) {
+    setThemes(undefined);
+    if (!chosen.length) return;
+    for (const theme of chosen) await api.exclude(residentId, { target: theme.id, kind: "tag", label: theme.name });
+    await refresh(`Also avoiding: ${chosen.map((theme) => theme.name).join(", ")}.`);
+  }
+
+  if (viewError || error) {
     return (
       <div className="stack">
-        <h1>We couldn't build the Memory Box</h1>
+        <h1>We couldn't open this Memory Box</h1>
         <Notice tone="error">
-          <p>{error}</p>
+          <p>{viewError ?? error}</p>
         </Notice>
-        <button className="btn btn-primary" onClick={() => setAttempt((n) => n + 1)}>
+        <button className="btn btn-primary" onClick={() => void load()}>
           <RotateCcw aria-hidden="true" size={20} /> Try again
         </button>
       </div>
     );
   }
-  if (!box) return <Progress step={step} />;
+  if (!box || !view) return <Progress step={step} />;
 
-  const { start, end } = box.window;
   return (
     <div className="stack">
-      <div className="box-header">
-        <div>
-          <h1 ref={headingRef} tabIndex={-1}>
-            Their Memory Box
-          </h1>
-          <p className="lede" style={{ marginBottom: "var(--space-2)" }}>
-            Born {person.birthYear}
-            {person.grewUp ? `, grew up in ${person.grewUp}` : ""}. Their youth: {start}–{end}.
+      <ResidentHeader view={view} title="Their Memory Box" headingRef={headingRef} />
+      <p className="sr-status" role="status" aria-live="polite">
+        {status}
+      </p>
+      {status && (
+        <Notice tone="info">
+          <p>
+            {updating && <Loader2 className="spin" aria-hidden="true" size={18} style={{ verticalAlign: "-3px", marginRight: 6 }} />}
+            {status}
           </p>
-          <p className="favorites-line">Built from what they loved: {person.favorites.map((favorite) => favorite.name).join(", ")}.</p>
-        </div>
-        <button className="btn btn-quiet" onClick={() => navigate("/start")}>
-          <RotateCcw aria-hidden="true" size={20} /> Start over
-        </button>
-      </div>
-
-      <Timeline birthYear={person.birthYear} sections={box.sections} />
-      <WhatQlooSees requests={box.whatQlooSaw} favorites={person.favorites} />
+        </Notice>
+      )}
+      <Timeline birthYear={view.resident.birthYear} sections={box.sections} />
+      <DecisionTrace steps={box.trace} defaultOpen={openTrace} />
+      <WhatQlooSees requests={box.whatQlooSaw} favorites={view.favorites} />
       <SectionTabs
         label="Kinds of memories"
         selected={tab}
@@ -180,10 +209,12 @@ export function MemoryBoxScreen({ person }: { person: Person }) {
                 <span className="tab-count">{section.items.length}</span>
               </>
             ),
-            panel: <Section key={section.kind} section={section} />,
+            panel: <Section key={section.kind} section={section} onReact={react} />,
           };
         })}
       />
+      <AskEncore residentId={residentId} />
+      {themes && <SimilarThemesDialog itemName={themes.item.name} themes={themes.options} onDone={avoidThemes} />}
     </div>
   );
 }

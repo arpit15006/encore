@@ -1,55 +1,54 @@
-import { useEffect, useState } from "react";
-import type { Person } from "./api";
+import { useEffect } from "react";
 import { Layout } from "./components/Layout";
-import { navigate, usePath } from "./router";
+import { TourBar } from "./components/TourBar";
+import { match, useLocation } from "./router";
+import { CompareScreen } from "./screens/Compare";
 import { Demo } from "./screens/Demo";
+import { EvaluationScreen } from "./screens/Evaluation";
+import { GroupScreen } from "./screens/Group";
 import { Intake } from "./screens/Intake";
 import { Landing } from "./screens/Landing";
 import { MemoryBoxScreen } from "./screens/MemoryBox";
+import { PublicVisitKit } from "./screens/VisitKit";
+import { VisitKitManager } from "./screens/VisitKitManager";
 
-// The current person survives a page refresh in this tab only. It holds no names, and
-// storage can be unavailable (private windows), so every access is guarded.
-const STORAGE_KEY = "encore.person";
-function loadPerson(): Person | undefined {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Person) : undefined;
-  } catch {
-    return undefined;
-  }
-}
-function savePerson(person: Person): void {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(person));
-  } catch {
-    // Nothing to do: the app still works for this page view.
-  }
+const TITLES: Array<[RegExp, string]> = [
+  [/^\/start/, "Tell us about them"],
+  [/^\/demo/, "Demo care home"],
+  [/^\/group/, "Group session setlist"],
+  [/^\/evaluation/, "How we tested Encore"],
+  [/^\/kit\//, "Visit Kit"],
+  [/^\/r\/[^/]+\/compare/, "Comparison"],
+  [/^\/r\/[^/]+\/visit-kit/, "Family Visit Kit"],
+  [/^\/r\//, "Their Memory Box"],
+];
+
+function Screen({ path, tourStep }: { path: string; tourStep: number }) {
+  let params: Record<string, string> | undefined;
+  if (path === "/start") return <Intake />;
+  if (path === "/demo") return <Demo />;
+  if (path === "/group") return <GroupScreen />;
+  if (path === "/evaluation") return <EvaluationScreen />;
+  if ((params = match("/kit/:token", path))) return <PublicVisitKit token={params.token!} />;
+  if ((params = match("/r/:id/compare", path))) return <CompareScreen residentId={params.id!} />;
+  if ((params = match("/r/:id/visit-kit", path))) return <VisitKitManager residentId={params.id!} />;
+  if ((params = match("/r/:id", path))) return <MemoryBoxScreen key={params.id} residentId={params.id!} openTrace={tourStep === 3} />;
+  return <Landing />;
 }
 
 export function App() {
-  const path = usePath();
-  const [person, setPerson] = useState<Person | undefined>(loadPerson);
-
-  const openBox = (next: Person) => {
-    setPerson(next);
-    savePerson(next);
-    navigate("/box");
-  };
+  const { path, search } = useLocation();
+  const tourStep = Number(search.get("tour") ?? 0);
 
   useEffect(() => {
-    if (path === "/box" && !person) navigate("/");
-  }, [path, person]);
-
-  useEffect(() => {
-    const titles: Record<string, string> = { "/start": "Tell us about them", "/demo": "Demo care home", "/box": "Their Memory Box" };
-    document.title = titles[path] ? `${titles[path]} · Encore` : "Encore";
+    const title = TITLES.find(([pattern]) => pattern.test(path))?.[1];
+    document.title = title ? `${title} · Encore` : "Encore";
   }, [path]);
 
-  let screen;
-  if (path === "/start") screen = <Intake onDone={openBox} />;
-  else if (path === "/demo") screen = <Demo onOpen={openBox} />;
-  else if (path === "/box" && person) screen = <MemoryBoxScreen person={person} />;
-  else screen = <Landing />;
-
-  return <Layout>{screen}</Layout>;
+  return (
+    <Layout>
+      <Screen path={path} tourStep={tourStep} />
+      {tourStep > 0 && <TourBar step={tourStep} />}
+    </Layout>
+  );
 }
