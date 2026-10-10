@@ -10,6 +10,11 @@ const EnvSchema = z.object({
   DATA_DIR: z.string().default("./var"),
   /** Requests per minute per visitor IP for /api routes. */
   RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(30),
+  /** Warm demo residents' caches at boot (set PREWARM=false to skip). */
+  PREWARM: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((value) => value === "true"),
 });
 
 export type Config = z.infer<typeof EnvSchema>;

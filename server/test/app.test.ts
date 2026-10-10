@@ -90,3 +90,19 @@ describe("serving the web app", () => {
     await app.close();
   });
 });
+
+describe("error handling", () => {
+  it("never leaks internal error messages to visitors", async () => {
+    const app = await buildApp({
+      qloo: fakeQloo({ call: async () => { throw new Error("secret provider detail sk-123"); } }) as QlooClient,
+      store: noLog,
+      rateLimitPerMinute: 10,
+      logger: false,
+    });
+    const response = await app.inject({ url: "/api/health/qloo/live" });
+    expect(response.statusCode).toBe(500);
+    expect(response.body).not.toContain("secret");
+    expect(response.json()).toEqual({ error: "server_error" });
+    await app.close();
+  });
+});

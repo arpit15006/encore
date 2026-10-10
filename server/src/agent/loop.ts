@@ -9,6 +9,8 @@ export interface AgentStep {
   status: QlooEnvelope["status"];
   summary?: string;
   resultCount: number;
+  /** Arguments Encore removed before calling Qloo. */
+  removed?: string[];
 }
 
 export interface AgentAnswer {
@@ -18,6 +20,7 @@ export interface AgentAnswer {
 }
 
 const MAX_TOOL_ROUNDS = 6;
+const STRIPPED_ARGS = ["signal_location", "demographic"];
 
 const SYSTEM_PROMPT = `You are Encore's planning agent. You help care staff and families find familiar music, films and shows for an older person.
 Rules:
@@ -25,7 +28,11 @@ Rules:
 - If a tool returns needs_input, list the candidates and ask which one is meant. Never guess.
 - If a tool returns empty, partial or degraded, say so plainly.
 - Never ask for or repeat a person's name, address or health details.
-- Phrase taste as "People who love X often enjoy Y". Never present it as a certainty about one person.`;
+- Don't send signal_location or demographic. In testing, location and age signals pulled results toward local mainstream taste and erased the person's own culture. Use their favorites as signals.
+- Prefer things from their youth (the years given below). Mention the year when you know it.
+- Phrase taste as "People who love X often enjoy Y". Never present it as a certainty about one person.
+- Start from the Memory Box picks listed below; they are already checked against their youth. Use at most two tool calls, only to add something the list lacks.
+- Keep the answer short: at most 6 suggestions, each with one line of why.`;
 
 /** Trim a Qloo envelope to what the model needs, to save tokens and keep it focused. */
 function compactForModel(envelope: QlooEnvelope): string {
@@ -52,20 +59,21 @@ export class EncoreAgent {
     this.groq = new Groq({ apiKey });
   }
 
-  async ask(question: string, scope: string): Promise<AgentAnswer> {
+  /** `context` describes the person (birth year, youth window, confirmed favorites with Qloo IDs). */
+  async ask(question: string, scope: string, context?: string): Promise<AgentAnswer> {
     const tools: ChatCompletionTool[] = (await this.qloo.toolDefinitions()).map((tool) => ({
       type: "function",
       function: { name: tool.name, description: tool.description ?? "", parameters: tool.inputSchema as Record<string, unknown> },
     }));
     const messages: ChatCompletionMessageParam[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: context ? `${SYSTEM_PROMPT}\n\nAbout this person:\n${context}` : SYSTEM_PROMPT },
       { role: "user", content: question },
     ];
     const steps: AgentStep[] = [];
 
     for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-      const completion = await this.groq.chat.completions.create({ model: this.model, messages, tools, tool_choice: "auto", temperature: 0 });
-      const message = completion.choices[0]?.message;
+      const message = await this.complete(messages, tools);
+      if (message === undefined) return this.answerWithoutTools(messages, steps);
       if (!message) break;
       messages.push(message);
       if (!message.tool_calls?.length) return { answer: message.content ?? "", steps, stoppedEarly: false };
@@ -74,7 +82,39 @@ export class EncoreAgent {
         messages.push({ role: "tool", tool_call_id: call.id, content: await this.runTool(call.function.name, call.function.arguments, scope, steps) });
       }
     }
-    return { answer: "I couldn't finish within the step limit. Please narrow the question.", steps, stoppedEarly: true };
+    // Out of tool rounds: answer with what has been gathered rather than giving up.
+    return this.answerWithoutTools(messages, steps);
+  }
+
+  /**
+   * One model turn. The model occasionally emits a malformed tool call, which the provider rejects;
+   * retry once with a little variation, then give up on tools for this question.
+   */
+  private async complete(messages: ChatCompletionMessageParam[], tools: ChatCompletionTool[]) {
+    for (const temperature of [0, 0.3]) {
+      try {
+        const completion = await this.groq.chat.completions.create({ model: this.model, messages, tools, tool_choice: "auto", temperature });
+        return completion.choices[0]?.message ?? null;
+      } catch {
+        // Fall through to the retry, then to an answer without tools.
+      }
+    }
+    return undefined;
+  }
+
+  private async answerWithoutTools(messages: ChatCompletionMessageParam[], steps: AgentStep[]): Promise<AgentAnswer> {
+    try {
+      const final = await this.groq.chat.completions.create({
+        model: this.model,
+        temperature: 0,
+        messages: [...messages, { role: "user", content: "Answer now using only what you already know from the context and tool results above." }],
+      });
+      const answer = final.choices[0]?.message?.content?.trim();
+      if (answer) return { answer, steps, stoppedEarly: true };
+    } catch {
+      // Reported below.
+    }
+    return { answer: "Encore couldn't answer that right now. Please try again in a moment.", steps, stoppedEarly: true };
   }
 
   /** Runs one model-requested tool call; problems are reported back to the model instead of calling Qloo. */
@@ -88,6 +128,9 @@ export class EncoreAgent {
     } catch {
       return JSON.stringify({ status: "error", summary: "Arguments were not valid JSON. Try again." });
     }
+    // Enforced, not just requested: location and age-group signals erased culture in testing.
+    const stripped = STRIPPED_ARGS.filter((key) => key in args);
+    for (const key of stripped) delete args[key];
     const envelope = await this.qloo.call(name as QlooToolName, args, { scope });
     steps.push({
       tool: name as QlooToolName,
@@ -95,6 +138,7 @@ export class EncoreAgent {
       status: envelope.status,
       resultCount: envelope.resultCount,
       ...(envelope.summary ? { summary: envelope.summary } : {}),
+      ...(stripped.length ? { removed: stripped } : {}),
     });
     return compactForModel(envelope);
   }
