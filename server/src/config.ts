@@ -9,7 +9,7 @@ const EnvSchema = z.object({
   GROQ_MODEL: z.string().default("openai/gpt-oss-120b"),
   DATA_DIR: z.string().default("./var"),
   /** Requests per minute per visitor IP for /api routes. */
-  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(30),
+  RATE_LIMIT_PER_MINUTE: z.coerce.number().int().positive().default(60),
   /** Warm demo residents' caches at boot (set PREWARM=false to skip). */
   PREWARM: z
     .enum(["true", "false"])
