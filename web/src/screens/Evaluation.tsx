@@ -123,7 +123,7 @@ export function EvaluationScreen() {
           ))}
           <li>
             Sample: {data.sample.evaluated} people born {data.sample.birthYears[0]}–{data.sample.birthYears[1]} ({data.sample.bornAbroad} born outside the UK), from{" "}
-            {data.sample.eligible} eligible guests. {data.sample.skipped ? `${data.sample.skipped} skipped because fewer than 5 of their artists matched Qloo exactly.` : ""}
+            {data.sample.eligible} eligible guests. {data.sample.skipped ? `${data.sample.skipped} skipped because fewer than 4 of their artists matched Qloo exactly.` : ""}
           </li>
           <li>These are mostly British public figures, and this measures recommendation accuracy, not outcomes for people with dementia. Encore hasn't been tested with caregivers yet.</li>
         </ul>

@@ -981,6 +981,15 @@ main {
 .resident-nav a:hover {
   color: var(--ink);
 }
+@media (max-width: 479px) {
+  .resident-nav {
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .resident-nav a {
+    padding: 0 var(--space-3);
+  }
+}
 .resident-nav a[aria-current="page"] {
   color: var(--ink);
   border-bottom-color: var(--primary);
