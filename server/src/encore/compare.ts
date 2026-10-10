@@ -57,8 +57,18 @@ Respond only with JSON: {"artists": ["name", ...]}`;
     .filter((name): name is string => typeof name === "string" && name.trim().length > 0)
     .slice(0, SIZE)
     .map((name) => ({ name: name.trim(), year: null, inYouth: null }));
-  const naiveItems = naive.results.slice(0, SIZE).map((entity) => {
-    const year = artistDebutYear(entity.properties ?? {});
+  // The recommend workflow returns no career data, so fetch it for exactly these entities
+  // (one Insights call restricted with filter.entities) to check them the same way as Encore's picks.
+  const naiveTop = naive.results.slice(0, SIZE);
+  const details = naiveTop.length
+    ? await qloo.insights(
+        { type: "artist", signalIds: input.favorites.map((f) => f.entityId), take: naiveTop.length, params: { "filter.entities": naiveTop.map((e) => e.entity_id).join(",") } },
+        { scope },
+      )
+    : undefined;
+  const naiveItems = naiveTop.map((entity) => {
+    const detail = details?.results.find((candidate) => candidate.entity_id === entity.entity_id);
+    const year = artistDebutYear(detail?.properties ?? entity.properties ?? {});
     return { name: entity.name, year, inYouth: year == null ? null : eraBand(year, window) === "in_era" };
   });
   const encoreItems = (box.sections.find((section) => section.kind === "music")?.items ?? []).slice(0, SIZE).map((item) => ({
