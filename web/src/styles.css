@@ -1437,6 +1437,12 @@ main {
   color: var(--primary);
   font-variant-numeric: tabular-nums;
 }
+.proof-vs {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
 .proof-stats p:last-child {
   margin: 0;
   color: var(--ink-muted);

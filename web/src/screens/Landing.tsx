@@ -6,36 +6,50 @@ import { startTour } from "../tour";
 
 const pct = (value: number) => `${Math.round(value * 100)}%`;
 
-/** Real measured numbers, shown only once the evaluation has been run. */
+/**
+ * Real measured numbers, shown only once the evaluation has been run. Includes where Encore loses:
+ * the honest overall result sits beside the born-abroad result it is strongest on.
+ */
 function Proof() {
   const [data, setData] = useState<Evaluation>();
   useEffect(() => {
     api.evaluation().then(setData).catch(() => undefined);
   }, []);
   if (!data) return null;
-  const encore = data.systems.find((s) => s.id === "encore");
-  const naive = data.systems.find((s) => s.id === "qloo_naive");
-  const plain = data.systems.find((s) => s.id === "plain_ai");
-  if (!encore || !naive || !plain) return null;
+  const find = (list: Evaluation["systems"], id: string) => list.find((s) => s.id === id);
+  const encore = find(data.systems, "encore");
+  const plain = find(data.systems, "plain_ai");
+  const naive = find(data.systems, "qloo_naive");
+  const encoreAbroad = find(data.systemsBornAbroad, "encore");
+  const plainAbroad = find(data.systemsBornAbroad, "plain_ai");
+  if (!encore || !plain || !naive || !encoreAbroad || !plainAbroad) return null;
   return (
     <section className="proof" aria-labelledby="proof-heading">
       <h2 id="proof-heading">Tested on real people's lifetime favorites</h2>
       <p className="hint">
         {data.sample.evaluated} guests of BBC Radio's <em>Desert Island Discs</em>. Each system got three of a guest's artists and had to find
-        the ones we hid.
+        the ones we hid. A small sample, so read these as early evidence.
       </p>
       <div className="proof-stats">
         <div>
-          <p className="proof-number">{pct(encore.hitRate)}</p>
-          <p>Encore found a hidden favorite</p>
+          <p className="proof-number">
+            {pct(encoreAbroad.hitRate)} <span className="proof-vs">vs {pct(plainAbroad.hitRate)}</span>
+          </p>
+          <p>
+            For the {data.sample.bornAbroad} born outside the UK, Encore found a hidden favorite; a plain AI model did for {pct(plainAbroad.hitRate)}.
+          </p>
         </div>
         <div>
-          <p className="proof-number">{pct(plain.hitRate)}</p>
-          <p>A plain AI model, same input</p>
+          <p className="proof-number">
+            {encore.youthShare != null ? pct(encore.youthShare) : "–"} <span className="proof-vs">vs {naive.youthShare != null ? pct(naive.youthShare) : "–"}</span>
+          </p>
+          <p>Of Encore's picks come from their youth, against Qloo used naively with location and age.</p>
         </div>
         <div>
-          <p className="proof-number">{encore.youthShare != null ? pct(encore.youthShare) : "–"}</p>
-          <p>Encore's picks from their youth{naive.youthShare != null ? ` (naive Qloo: ${pct(naive.youthShare)})` : ""}</p>
+          <p className="proof-number">
+            {pct(encore.hitRate)} <span className="proof-vs">vs {pct(plain.hitRate)}</span>
+          </p>
+          <p>Across everyone, the plain AI model did better, mostly on famous British music it knows well.</p>
         </div>
       </div>
       <a
@@ -45,7 +59,7 @@ function Proof() {
           navigate("/evaluation");
         }}
       >
-        See the method, every number, and where Encore loses
+        See the method and every number
       </a>
     </section>
   );

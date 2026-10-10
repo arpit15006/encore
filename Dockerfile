@@ -22,6 +22,8 @@ COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/server/package.json server/
 COPY --from=build --chown=node:node /app/server/dist server/dist
 COPY --from=build --chown=node:node /app/web/dist web/dist
+# Aggregate evaluation results (the dataset itself is never bundled; its license forbids it).
+COPY --chown=node:node eval/results.json eval/results.json
 RUN mkdir -p /app/var && chown node:node /app/var
 USER node
 # Hackathon keys only work against the hackathon API; the harness defaults to production.
