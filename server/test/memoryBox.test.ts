@@ -44,6 +44,14 @@ describe("buildMemoryBox", () => {
     expect(music.items.map((item) => item.interpretation.band)).toEqual(["in_era", "in_era", "unknown", "too_late"]);
   });
 
+  it("leaves out too-late picks when there are enough from their youth", async () => {
+    const era = Array.from({ length: 7 }, (_, i) => artist(`Era ${i}`, 1945 + i));
+    const qloo = fakeQloo({ artist: { status: "ok", results: [artist("Late", 1995), ...era] } });
+    const music = (await buildMemoryBox(qloo, person, "test")).sections[0]!;
+    expect(music.items.some((item) => item.name === "Late")).toBe(false);
+    expect(music.items).toHaveLength(7);
+  });
+
   it("drops favorites, including ones Qloo returns under another spelling", async () => {
     const qloo = fakeQloo({
       artist: {
