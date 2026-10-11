@@ -1419,6 +1419,28 @@ main {
   margin-bottom: var(--space-2);
 }
 
+/* For care homes */
+.care-homes {
+  margin-top: var(--space-6);
+}
+.care-grid {
+  display: grid;
+  gap: var(--space-5);
+  margin: var(--space-4) 0;
+}
+@media (min-width: 768px) {
+  .care-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.care-grid h3 {
+  font-size: 1.2rem;
+}
+.care-grid p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+
 /* Landing proof and links */
 .proof {
   margin-top: var(--space-7);

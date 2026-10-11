@@ -1,4 +1,4 @@
-import { BarChart3, CalendarClock, Heart, Loader2, Map, Music4, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, Building2, CalendarClock, Heart, Loader2, Map, Music4, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, type Evaluation } from "../api";
 import { navigate } from "../router";
@@ -65,6 +65,42 @@ function Proof() {
   );
 }
 
+/** Who pays, for the people deciding whether Encore is a business. Figures are sourced in the README. */
+function ForCareHomes() {
+  return (
+    <section className="form-section care-homes" aria-labelledby="care-homes-heading">
+      <h2 id="care-homes-heading">
+        <Building2 aria-hidden="true" size={26} style={{ verticalAlign: "-4px", marginRight: 8 }} />
+        For care homes
+      </h2>
+      <div className="care-grid">
+        <div>
+          <h3>Who it's for</h3>
+          <p>
+            Activity directors at the 14,742 US nursing homes and about 32,000 assisted-living communities. US nursing homes must offer
+            activities that match each resident's interests, and gather those interests from family when residents can't say.
+          </p>
+        </div>
+        <div>
+          <h3>What it saves</h3>
+          <p>
+            A family's description becomes a plan in seconds: songs, films, starters and a group setlist, all from that person's youth and
+            culture. Reactions record what landed, session by session.
+          </p>
+        </div>
+        <div>
+          <h3>How it would earn</h3>
+          <p>
+            A small monthly fee per resident, paid by the care home. Visit Kits stay free for families; they're how families discover Encore
+            and bring it to their relative's home.
+          </p>
+        </div>
+      </div>
+      <p className="hint">Encore supports activities and engagement; it doesn't certify compliance or replace care professionals.</p>
+    </section>
+  );
+}
+
 export function Landing() {
   const [starting, setStarting] = useState(false);
   return (
@@ -107,6 +143,7 @@ export function Landing() {
       </div>
 
       <Proof />
+      <ForCareHomes />
 
       <div className="promise">
         <div className="promise-item">
