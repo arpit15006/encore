@@ -12,7 +12,7 @@ import openpyxl
 
 SOURCE = "data/desert_island_discs.xlsx"
 OUT = "data/eval-sample.json"
-PER_GROUP = 15  # born in the UK, born elsewhere
+PER_GROUP = 30  # born in the UK, born elsewhere
 CLASSICAL = ["classical", "opera", "baroque", "romantic era", "orchestra", "early music", "choral", "late romantic", "impressionism", "neoclassicism"]
 UK = {"United Kingdom", "United Kingdom of Great Britain and Ireland"}
 

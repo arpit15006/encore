@@ -126,26 +126,27 @@ A fictional resident born 1940 who grew up in Mumbai; the family typed "Lata Man
 
 **Ground truth comes from real people, not from us.** Every guest on BBC Radio's *Desert Island Discs* chooses the records they'd keep for life. We used the open dataset of every episode ([Finnegan, Rangel Smith & Van Stroud, 2021](https://doi.org/10.17613/2gg4-hw68), CC BY-NC-SA 4.0; built on Gustar 2020 and Morgan 2018).
 
-- **Sample:** 30 guests born 1920–1965 drawn at random from 997 eligible, half born outside the UK; 23 evaluated (7 had fewer than 4 artists that matched Qloo exactly).
+- **Sample:** 60 guests born 1920–1965 drawn at random from 997 eligible, half born outside the UK (31 countries of birth); 46 evaluated, 25 of them born outside the UK (14 had fewer than 4 artists that matched Qloo exactly).
 - **Task:** every system gets the same intake (birth year, place of birth, three of the guest's chosen artists) and must find the others in its top 20. **Names are never sent** to Qloo or the model.
 - **Systems:** a plain AI model (same intake, no Qloo), Qloo with location and age signals, Qloo with favorites only (no era re-rank), and Encore.
 
 | System | Found a hidden favorite | Hidden favorites found | Picks from their youth | List overlap between people |
 |---|---|---|---|---|
-| Plain AI model | **30%** | **16%** | not measurable | 16% |
-| Qloo + location & age | 17% | 9% | 71% | 7% |
-| Qloo, no era re-rank | 22% | 10% | 90% | 3% |
-| **Encore** | 22% | 10% | **97%** | **3%** |
-| *Born outside the UK (13):* plain AI model | 15% | 6% | – | |
-| *Born outside the UK (13):* **Encore** | **31%** | **15%** | 94% | |
+| Plain AI model | **33%** | **18%** | not measurable | 15% |
+| Qloo + location & age | 20% | 9% | 71% | 6% |
+| Qloo, no era re-rank | 22% | 11% | 88% | 3% |
+| **Encore** | 22% | 12% | **96%** | **3%** |
+| *Born outside the UK (25):* plain AI model | 20% | 9% | – | 14% |
+| *Born outside the UK (25):* Qloo + location & age | 28% | 13% | 72% | 4% |
+| *Born outside the UK (25):* **Encore** | **32%** | **19%** | 95% | 2% |
 
 **Reading it honestly:**
 - Across everyone, **the plain AI model did better** at finding hidden favorites. These are mostly British public figures choosing well-known music, which large models know well.
-- For guests **born outside the UK**, Encore found a hidden favorite **twice as often** as the plain model: the culturally-blind case Encore exists for.
-- Encore keeps **97%** of picks in the person's youth versus 71% for naive Qloo, and its lists are about five times more personal than the plain model's. The era re-rank improves youth share, not hit rate.
-- The sample is small; one or two people move these numbers. Treat them as early evidence.
+- For guests **born outside the UK**, Encore found a hidden favorite about **1.6 times as often** as the plain model (32% vs 20%) and found **twice as many** of their hidden favorites (19% vs 9%): the culturally-blind case Encore exists for.
+- Encore keeps **96%** of picks in the person's youth versus 71% for naive Qloo, and its lists are about five times more personal than the plain model's. The era re-rank mainly improves youth share; it barely moves hit rate.
+- The sample is still small (46 people); treat these as early evidence, not proof.
 
-**Do lifetime favorites come from youth?** Using Qloo's career start years for the artists guests chose: 41% started when the guest was 10–29, and 41% before the guest was 10 (often their parents' music). It's a rough proxy (artist debut, not song release), and it supports widening the window downwards as future work.
+**Do lifetime favorites come from youth?** Using Qloo's career start years for the 102 dated artists guests chose: 40% started when the guest was 10–29, and 42% before the guest was 10 (often their parents' music), so this data shows no clear youth peak. It's a rough proxy (artist debut, not song release), and it supports widening the window downwards as future work.
 
 **Speed:** a brand-new person's Memory Box (36 picks, three Qloo requests in parallel) took 5.6 seconds; repeat views come from cache in about 7 ms. We have not measured caregiver time savings and don't claim any.
 
@@ -250,7 +251,7 @@ On boot the server warms every demo resident's Qloo and model answers in the bac
 - Coverage is thinner for some catalogs. TV picks for a Mumbai-born person are American shows, because her favorites contain no TV and Indian TV barely existed then; Encore labels such sections lower confidence.
 - Qloo sometimes has duplicate entities for one artist (two entries for Mohammed Rafi), so every match is confirmed by the family.
 - AI-written text (starters, Ask Encore answers) can add small factual flourishes. Starters are restricted to Qloo's tags; agent answers are labelled as AI-written.
-- The evaluation uses 23 mostly British public figures and measures recommendation accuracy, not outcomes for people with dementia. **Encore has not yet been tested with caregivers or residents.**
+- The evaluation uses 46 public figures, about half born in the UK, and measures recommendation accuracy, not outcomes for people with dementia. **Encore has not yet been tested with caregivers or residents.**
 - A production version would need HIPAA business-associate and facility data agreements; this demo stores no real people's data.
 
 ## Sources

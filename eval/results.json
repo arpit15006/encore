@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-10T19:54:03.418Z",
+ "generatedAt": "2026-10-11T08:36:38.999Z",
  "dataset": {
   "name": "Desert Island Disks (Finnegan, Rangel Smith & Van Stroud, 2021), built on Gustar (2020) and Morgan (2018)",
   "license": "CC BY-NC-SA 4.0",
@@ -15,111 +15,111 @@
  },
  "sample": {
   "eligible": 997,
-  "evaluated": 23,
-  "skipped": 7,
-  "bornAbroad": 13,
+  "evaluated": 46,
+  "skipped": 14,
+  "bornAbroad": 25,
   "birthYears": [
-   1921,
-   1963
+   1920,
+   1964
   ]
  },
  "systems": [
   {
    "id": "plain_ai",
    "label": "Plain AI model (same intake, no Qloo)",
-   "hitRate": 0.304,
-   "recall": 0.159,
+   "hitRate": 0.326,
+   "recall": 0.183,
    "youthShare": null,
-   "listOverlap": 0.163
+   "listOverlap": 0.149
   },
   {
    "id": "qloo_naive",
    "label": "Qloo with location and age signals",
-   "hitRate": 0.174,
-   "recall": 0.091,
-   "youthShare": 0.714,
-   "listOverlap": 0.07
+   "hitRate": 0.196,
+   "recall": 0.085,
+   "youthShare": 0.707,
+   "listOverlap": 0.059
   },
   {
    "id": "qloo_raw",
    "label": "Qloo, favorites only, no era re-rank",
    "hitRate": 0.217,
-   "recall": 0.098,
-   "youthShare": 0.904,
+   "recall": 0.105,
+   "youthShare": 0.88,
    "listOverlap": 0.029
   },
   {
    "id": "encore",
    "label": "Encore (favorites only + era re-rank)",
    "hitRate": 0.217,
-   "recall": 0.098,
-   "youthShare": 0.967,
-   "listOverlap": 0.029
+   "recall": 0.116,
+   "youthShare": 0.957,
+   "listOverlap": 0.028
   }
  ],
  "systemsBornAbroad": [
   {
    "id": "plain_ai",
    "label": "Plain AI model (same intake, no Qloo)",
-   "hitRate": 0.154,
-   "recall": 0.058,
+   "hitRate": 0.2,
+   "recall": 0.09,
    "youthShare": null,
-   "listOverlap": 0.124
+   "listOverlap": 0.137
   },
   {
    "id": "qloo_naive",
    "label": "Qloo with location and age signals",
-   "hitRate": 0.231,
-   "recall": 0.141,
-   "youthShare": 0.651,
-   "listOverlap": 0.044
+   "hitRate": 0.28,
+   "recall": 0.133,
+   "youthShare": 0.718,
+   "listOverlap": 0.039
   },
   {
    "id": "qloo_raw",
    "label": "Qloo, favorites only, no era re-rank",
-   "hitRate": 0.308,
-   "recall": 0.147,
-   "youthShare": 0.869,
-   "listOverlap": 0.018
+   "hitRate": 0.32,
+   "recall": 0.167,
+   "youthShare": 0.862,
+   "listOverlap": 0.023
   },
   {
    "id": "encore",
    "label": "Encore (favorites only + era re-rank)",
-   "hitRate": 0.308,
-   "recall": 0.147,
-   "youthShare": 0.942,
-   "listOverlap": 0.02
+   "hitRate": 0.32,
+   "recall": 0.187,
+   "youthShare": 0.95,
+   "listOverlap": 0.022
   }
  ],
  "reminiscenceBump": {
   "note": "Age of each person when the artists they chose for life started their careers (Qloo start_year). This is artist debut, not song release, so it is a rough proxy.",
-  "total": 46,
+  "total": 102,
   "buckets": [
    {
     "label": "before birth",
-    "count": 7
+    "count": 22
    },
    {
     "label": "0–9",
-    "count": 12
+    "count": 21
    },
    {
     "label": "10–19",
-    "count": 10
+    "count": 19
    },
    {
     "label": "20–29",
-    "count": 9
+    "count": 22
    },
    {
     "label": "30–39",
-    "count": 4
+    "count": 5
    },
    {
     "label": "40+",
-    "count": 4
+    "count": 13
    }
   ]
  },
- "qlooCallsThisRun": 46
+ "qlooCallsThisRun": 231
 }

@@ -65,6 +65,7 @@ export function EvaluationScreen() {
   const bump = data.reminiscenceBump;
   const youthBuckets = new Set(["10–19", "20–29"]);
   const youthCount = bump.buckets.filter((b) => youthBuckets.has(b.label)).reduce((sum, b) => sum + b.count, 0);
+  const earlyCount = bump.buckets.filter((b) => b.label === "before birth" || b.label === "0–9").reduce((sum, b) => sum + b.count, 0);
   const best = [...data.systems].sort((a, b) => b.hitRate - a.hitRate)[0];
 
   return (
@@ -98,7 +99,22 @@ export function EvaluationScreen() {
           </Notice>
         )}
         <SystemsTable systems={data.systems} caption={`All ${data.sample.evaluated} people`} />
-        {data.systemsBornAbroad.length > 0 && <SystemsTable systems={data.systemsBornAbroad} caption={`The ${data.sample.bornAbroad} people born outside the UK`} />}
+        {data.systemsBornAbroad.length > 0 && (
+          <>
+            <h3 style={{ marginTop: "var(--space-6)" }}>People born outside the UK</h3>
+            <p className="hint">
+              The culturally-blind case Encore is built for: share of the {data.sample.bornAbroad} people born outside the UK whose hidden favorites
+              each system found.
+            </p>
+            <HorizontalBars
+              title="Hidden favorites found, people born outside the UK"
+              description={data.systemsBornAbroad.map((s) => `${SHORT[s.id]}: ${pct(s.recall)}`).join(". ")}
+              max={Math.max(0.25, ...data.systemsBornAbroad.map((s) => s.recall))}
+              bars={data.systemsBornAbroad.map((system) => ({ label: SHORT[system.id], value: system.recall, display: pct(system.recall), highlight: system.id === "encore" }))}
+            />
+            <SystemsTable systems={data.systemsBornAbroad} caption={`The ${data.sample.bornAbroad} people born outside the UK`} />
+          </>
+        )}
       </section>
 
       <section className="form-section" aria-labelledby="eval-bump">
@@ -111,7 +127,8 @@ export function EvaluationScreen() {
         />
         <p>
           {youthCount} of {bump.total} chosen artists ({Math.round((youthCount / Math.max(1, bump.total)) * 100)}%) started out when the guest was
-          10 to 29. That's the window Encore searches first.
+          10 to 29, and {earlyCount} ({Math.round((earlyCount / Math.max(1, bump.total)) * 100)}%) before the guest was 10, often their parents' music.
+          So this data doesn't show a clean youth peak. Encore searches from age 10; widening the window downwards is our next step.
         </p>
       </section>
 
@@ -125,7 +142,7 @@ export function EvaluationScreen() {
             Sample: {data.sample.evaluated} people born {data.sample.birthYears[0]}–{data.sample.birthYears[1]} ({data.sample.bornAbroad} born outside the UK), from{" "}
             {data.sample.eligible} eligible guests. {data.sample.skipped ? `${data.sample.skipped} skipped because fewer than 4 of their artists matched Qloo exactly.` : ""}
           </li>
-          <li>These are mostly British public figures, and this measures recommendation accuracy, not outcomes for people with dementia. Encore hasn't been tested with caregivers yet.</li>
+          <li>These are public figures (about half born in the UK), and this measures recommendation accuracy, not outcomes for people with dementia. Encore hasn't been tested with caregivers yet.</li>
         </ul>
         <p className="hint">
           Data: {data.dataset.name}, {data.dataset.license},{" "}
