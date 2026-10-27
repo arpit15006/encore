@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 
 // A small router: paths and the query string live in the URL so the back button and deep links
 // (e.g. /demo, /kit/<token>) work. Screens are matched with simple patterns in App.
 
 export function navigate(to: string): void {
   if (to === window.location.pathname + window.location.search) return;
-  window.history.pushState(null, "", to);
-  window.dispatchEvent(new PopStateEvent("popstate"));
-  window.scrollTo({ top: 0 });
+  const go = () => {
+    // Render the new screen synchronously so a view transition captures it.
+    flushSync(() => {
+      window.history.pushState(null, "", to);
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+    window.scrollTo({ top: 0 });
+  };
+  const motionOk = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (motionOk && "startViewTransition" in document) document.startViewTransition(go);
+  else go();
 }
 
 export function useLocation(): { path: string; search: URLSearchParams } {

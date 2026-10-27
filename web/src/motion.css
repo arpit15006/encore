@@ -1,0 +1,769 @@
+/*
+ * Motion and interaction. Everything here is decoration on top of a page that works without it.
+ * styles.css turns all animation and transition off under prefers-reduced-motion, and the
+ * reveal-on-scroll helpers show content at once in that case.
+ */
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+}
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0); }
+}
+@keyframes pop {
+  45% { transform: scale(1.3) rotate(-8deg); }
+}
+@keyframes drift {
+  50% { transform: translateY(-6px) rotate(-1deg); }
+}
+@keyframes twinkle {
+  50% { transform: scale(0.55); opacity: 0.5; }
+}
+@keyframes beat {
+  15%, 45% { transform: scale(1.22); }
+  30% { transform: scale(1); }
+}
+
+/* Page changes cross-fade (View Transitions API); the header stays put. */
+.site-header { view-transition-name: site-header; }
+::view-transition-old(root) { animation: vt-out 160ms ease-in both; }
+::view-transition-new(root) { animation: vt-in 340ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+@keyframes vt-out { to { opacity: 0; transform: translateY(-6px); } }
+@keyframes vt-in { from { opacity: 0; transform: translateY(14px); } }
+
+/* Reveal on scroll. */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 600ms ease,
+    transform 760ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition-delay: var(--delay, 0ms);
+}
+.reveal[data-shown] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Cards that lean toward the pointer (mouse only). */
+@media (hover: hover) and (pointer: fine) {
+  .tilt {
+    transform: perspective(900px) rotateX(calc(var(--py, 0) * -3deg)) rotateY(calc(var(--px, 0) * 4deg));
+    transition:
+      transform 320ms ease-out,
+      box-shadow 320ms ease-out;
+  }
+  .tilt:hover {
+    box-shadow: 0 14px 34px rgb(42 31 23 / 0.14);
+  }
+}
+
+/* Header and buttons. */
+.brand .brand-mark { transform-origin: center; }
+.brand:hover .brand-mark { animation: art-turn 1.8s linear infinite; }
+.btn svg { transition: transform 200ms ease; }
+.btn:hover:not(:disabled) .lucide-arrow-right { transform: translateX(4px); }
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgb(154 52 18 / 0.25);
+}
+.groove-divider path { animation: groove-flow 5s linear infinite; }
+@keyframes groove-flow { to { transform: translateX(-60px); } }
+
+/* Hero: layers drift with the pointer for depth; the record turns, the heart beats. */
+.hero-visual { --px: 0; --py: 0; }
+.hero-art .depth-back,
+.hero-art .depth-far,
+.hero-art .depth-mid,
+.hero-art .depth-near { transition: transform 500ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.hero-art .depth-back { transform: translate(calc(var(--px) * -6px), calc(var(--py) * -5px)); }
+.hero-art .depth-far { transform: translate(calc(var(--px) * 10px), calc(var(--py) * 8px)); }
+.hero-art .depth-mid { transform: translate(calc(var(--px) * 16px), calc(var(--py) * 12px)); }
+.hero-art .depth-near { transform: translate(calc(var(--px) * 26px), calc(var(--py) * 18px)); }
+.art .turn-slow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: art-turn 14s linear infinite;
+}
+.art .twinkle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: twinkle 2.8s ease-in-out infinite;
+}
+.art .twinkle.later { animation-delay: -1s; }
+.art .twinkle.latest { animation-delay: -2s; }
+.art .beat {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: beat 2.4s ease-in-out infinite;
+}
+.page-hero-art .art,
+.section-art .art,
+.proof-art .art { animation: drift 8s ease-in-out infinite; }
+.page-hero-stamp .art,
+.resident-stamp .art,
+.seat-stamp .art { transition: transform 400ms cubic-bezier(0.3, 1.5, 0.5, 1); }
+.page-hero-stamp:hover .art,
+.resident:hover .resident-stamp .art,
+.seat:hover .seat-stamp .art { transform: rotate(-7deg) scale(1.08); }
+
+/* Keepsakes: records slide out and spin, films zoom, TVs flicker like a channel change. */
+.art .sleeve-record {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 800ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.memory-card:hover .sleeve-record,
+.memory-card:focus-within .sleeve-record,
+.shelf li:hover .sleeve-record,
+.setlist > li:hover .sleeve-record,
+.setlist > li[data-for] .sleeve-record,
+.kit-songs li:hover .sleeve-record,
+.youth-decades li[data-lit] .sleeve-record,
+.how-steps li:hover .sleeve-record {
+  transform: translateX(16px) rotate(220deg);
+}
+.art .film-roll {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.memory-card:hover .film-roll,
+.memory-card:focus-within .film-roll,
+.shelf li:hover .film-roll,
+.youth-decades li[data-lit] .film-roll,
+.kit-film-row:hover .film-roll { transform: scale(1.18) rotate(-4deg); }
+.art .tv-static { opacity: 0; }
+.memory-card:hover .tv-static,
+.shelf li:hover .tv-static { animation: tv-flicker 600ms steps(4) 1; }
+@keyframes tv-flicker {
+  0%, 100% { opacity: 0; transform: translateY(0); }
+  25% { opacity: 1; transform: translateY(-3px); }
+  50% { opacity: 0.4; transform: translateY(2px); }
+  75% { opacity: 1; transform: translateY(-1px); }
+}
+
+/* Memory cards arrive in a ripple and lift under the pointer. */
+.cards > .memory-card {
+  animation: card-in 560ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+  transition:
+    transform 260ms ease,
+    box-shadow 260ms ease;
+}
+@media (hover: hover) {
+  .cards > .memory-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px rgb(42 31 23 / 0.14);
+  }
+}
+.memory-card[data-pinned] {
+  box-shadow:
+    0 0 0 2px var(--art-mustard),
+    var(--shadow);
+}
+.pinned-badge { animation: pop 600ms ease-out; }
+
+/* Reactions: a face for each, sparkles for "lit up", a soft ripple for "calm". */
+.reaction {
+  position: relative;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease;
+}
+.reaction-face {
+  display: block;
+  width: 30px;
+  transition: transform 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.reaction:hover:not(:disabled) .reaction-face { transform: scale(1.18) rotate(-8deg); }
+.reaction[aria-pressed="true"] .reaction-face { animation: pop 600ms ease-out; }
+.burst {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  pointer-events: none;
+}
+.burst span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px;
+  border-radius: 2px;
+  background: var(--art-mustard);
+  transform: rotate(var(--angle)) translateY(0);
+  animation: burst 760ms cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.burst span:nth-child(3n + 1) { background: var(--art-terracotta); }
+.burst span:nth-child(3n + 2) { background: var(--art-teal); border-radius: 50%; }
+@keyframes burst {
+  to { transform: rotate(var(--angle)) translateY(-52px) scale(0.3); opacity: 0; }
+}
+.ripple {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 3px solid var(--art-teal);
+  pointer-events: none;
+  animation: ripple 900ms ease-out forwards;
+}
+@keyframes ripple {
+  to { transform: scale(1.3); opacity: 0; }
+}
+
+/* Small art in tabs, summaries and titles. */
+.tab-art,
+.summary-art {
+  display: inline-block;
+  flex: none;
+  width: 30px;
+}
+.summary-art { width: 38px; }
+.title-with-art {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.title-art {
+  flex: none;
+  width: 48px;
+}
+.art .spin-on-hover {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.tab:hover .spin-on-hover,
+.tab[aria-selected="true"] .spin-on-hover,
+.favorite-group:focus-within .spin-on-hover,
+.ask:hover .spin-on-hover { transform: rotate(240deg); }
+.art .tick-hand {
+  transform-box: view-box;
+  transform-origin: 32px 36px;
+  animation: art-turn 6s steps(12) infinite;
+}
+.art .sway {
+  transform-box: view-box;
+  transform-origin: 30px 14px;
+  animation: sway 3s ease-in-out infinite;
+}
+@keyframes sway {
+  50% { transform: rotate(8deg); }
+}
+.tabpanel > * { animation: fade-up 380ms ease-out backwards; }
+.qloo-sees[open] .qloo-sees-body { animation: fade-up 320ms ease-out; }
+.qloo-sees[open] .trace-list li {
+  animation: fade-up 400ms ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.notice { animation: fade-up 360ms ease-out backwards; }
+
+/* Timeline: the youth band opens, then each pick pops onto its year. */
+.timeline .youth-band {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: band-open 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes band-open {
+  from { transform: scaleX(0); opacity: 0; }
+}
+.timeline-marker {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: pop-in 500ms cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+  animation-delay: calc(400ms + var(--i, 0) * 30ms);
+  transition: transform 200ms ease;
+  cursor: help;
+}
+.timeline-marker:hover { transform: scale(1.6); }
+
+/* Charts grow when they come into view. */
+.chart-bar {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: bar-grow 1000ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+}
+.chart-column {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: column-grow 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+@keyframes column-grow {
+  from { transform: scaleY(0); }
+}
+.reveal:not([data-shown]) .chart-bar,
+.reveal:not([data-shown]) .chart-column,
+.reveal:not([data-shown]) .people-grid li,
+.compare-col:not([data-shown]) .compare-list li { animation-play-state: paused; }
+
+/* Comparison: each column's picks arrive one by one, and the year checks pop. */
+.compare-col .compare-list li {
+  animation: fade-up 420ms ease-out backwards;
+  animation-delay: calc(500ms + var(--i, 0) * 60ms);
+}
+.compare-col[data-system="encore"] {
+  background-image: radial-gradient(circle at 100% 0, var(--primary-soft), transparent 45%);
+}
+
+/* Landing: record shelf. */
+.shelf {
+  margin-top: var(--space-6);
+  overflow: hidden;
+  padding: var(--space-3) 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.shelf-track {
+  display: flex;
+  gap: 28px;
+  width: max-content;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  animation: shelf 60s linear infinite;
+}
+.shelf li {
+  flex: none;
+  width: 132px;
+  transition: transform 300ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.shelf li:nth-child(odd) { transform: rotate(-2deg); }
+.shelf li:hover { transform: translateY(-8px) rotate(-3deg) scale(1.05); }
+.shelf:hover .shelf-track { animation-play-state: paused; }
+@keyframes shelf {
+  to { transform: translateX(calc(-50% - 14px)); }
+}
+
+/* Landing: how it works. */
+.how { margin-top: var(--space-7); }
+.how-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+}
+.how-steps li {
+  position: relative;
+  text-align: center;
+}
+.how-art {
+  height: 150px;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-3);
+}
+.how-art > .art {
+  height: 140px;
+  width: auto;
+  max-width: 100%;
+  transition: transform 400ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.how-steps li:hover .how-art > .art { transform: translateY(-6px) rotate(-2deg); }
+.how-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+.how-number {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+@media (min-width: 900px) {
+  .how-steps li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 72px;
+    right: -18%;
+    width: 22%;
+    border-top: 3px dotted var(--art-terracotta);
+    opacity: 0.7;
+  }
+}
+.fan {
+  position: relative;
+  width: 190px;
+  height: 130px;
+}
+.fan .art {
+  position: absolute;
+  top: 18px;
+  left: 30px;
+  width: 124px;
+  transform-origin: 50% 120%;
+  transition: transform 500ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.fan .art:nth-child(1) { transform: rotate(-16deg) translateX(-14px); }
+.fan .art:nth-child(3) { transform: rotate(14deg) translateX(14px); }
+.how-steps li:hover .fan .art:nth-child(1) { transform: rotate(-26deg) translateX(-26px); }
+.how-steps li:hover .fan .art:nth-child(3) { transform: rotate(24deg) translateX(26px); }
+.faces {
+  display: grid;
+  grid-template-columns: repeat(2, 60px);
+  gap: var(--space-2);
+}
+.faces .art { animation: drift 3.2s ease-in-out infinite; }
+.faces .art:nth-child(2) { animation-delay: -0.8s; }
+.faces .art:nth-child(3) { animation-delay: -1.6s; }
+.faces .art:nth-child(4) { animation-delay: -2.4s; }
+
+/* Landing: the youth window you can play with. */
+.youth {
+  margin-top: var(--space-7);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.youth-head p { margin-bottom: var(--space-4); }
+.youth-control {
+  display: grid;
+  gap: var(--space-3);
+  align-items: center;
+}
+@media (min-width: 720px) {
+  .youth-control { grid-template-columns: auto 1fr auto; gap: var(--space-5); }
+}
+.youth-label { font-weight: 700; }
+.youth-year {
+  font-family: var(--font-display);
+  font-size: 2.2rem;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+.youth-control input[type="range"] {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--primary);
+  cursor: grab;
+}
+.youth-out { font-size: 1.15rem; }
+.youth-decades {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-5) 0 0;
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(4, 1fr);
+}
+@media (min-width: 720px) {
+  .youth-decades { grid-template-columns: repeat(8, 1fr); }
+}
+.youth-decades li {
+  text-align: center;
+  opacity: 0.35;
+  filter: grayscale(0.85);
+  transform: translateY(8px) scale(0.92);
+  transition:
+    opacity 400ms ease,
+    filter 400ms ease,
+    transform 500ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.youth-decades li[data-lit] {
+  opacity: 1;
+  filter: none;
+  transform: translateY(-6px) scale(1.04);
+}
+.youth-decade {
+  display: block;
+  margin-top: var(--space-1);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.youth-decades li[data-lit] .youth-decade { color: var(--primary); }
+
+/* Tiles: a picture and a line, instead of paragraphs. */
+.tiles {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  margin: var(--space-4) 0;
+}
+.tile h3 { font-size: 1.25rem; margin-bottom: var(--space-2); }
+.tile p { margin: 0; color: var(--ink-muted); }
+.tile-art {
+  height: 84px;
+  margin-bottom: var(--space-3);
+  transition: transform 400ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.tile-art .art {
+  height: 100%;
+  width: auto;
+}
+.tile:hover .tile-art { transform: translateY(-4px) rotate(-3deg); }
+.tiles.promise {
+  margin-top: var(--space-7);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+.care-homes .tiles { clear: both; }
+.tiles.promise .tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tiles.promise .tile-art { grid-row: span 2; margin: 0; height: 72px; }
+.tiles.promise .tile h3 { align-self: end; margin: 0; }
+.tiles.promise .tile p { align-self: start; }
+
+/* Landing proof: count-up numbers on a meter (the bar is Encore, the tick is the comparison). */
+.meter {
+  position: relative;
+  height: 10px;
+  margin: var(--space-2) 0 var(--space-3);
+  background: var(--surface-2);
+  border-radius: 999px;
+}
+.meter-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--primary);
+  border-radius: 999px;
+  transform-origin: left;
+  transition: transform 1200ms cubic-bezier(0.2, 0.8, 0.2, 1) calc(var(--delay, 0ms) + 200ms);
+}
+.reveal:not([data-shown]) .meter-bar { transform: scaleX(0); }
+.meter-mark {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  width: 4px;
+  margin-left: -2px;
+  background: var(--ink);
+  border-radius: 2px;
+}
+
+/* Landing: picture links. */
+.more-links {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+.more-links .more-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  text-decoration: none;
+}
+.more-art {
+  display: grid;
+  place-items: center;
+  height: 110px;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.more-art .art { height: 96px; width: auto; transition: transform 500ms cubic-bezier(0.3, 1.4, 0.5, 1); }
+.more-card:hover .more-art .art { transform: scale(1.08) rotate(-2deg); }
+.more-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  color: var(--primary);
+}
+.more-label svg { transition: transform 200ms ease; }
+.more-card:hover .more-label svg { transform: translateX(4px); }
+
+/* Group: choose a resident to light up their songs. */
+.seating-title { font-size: 1.5rem; margin-bottom: var(--space-1); }
+.seats {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  margin-top: var(--space-3);
+}
+.seat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  min-height: 48px;
+  border: 2px solid var(--control-border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  animation: card-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 70ms);
+  transition:
+    transform 260ms cubic-bezier(0.3, 1.5, 0.5, 1),
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+.seat:hover { transform: translateY(-3px); }
+.seat[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  transform: translateY(-5px);
+}
+.seat-stamp { width: 72px; }
+.seat-label { font-weight: 700; }
+.seat-count { font-size: 0.9rem; color: var(--ink-muted); }
+.setlist > li {
+  animation: card-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 50ms);
+  transition:
+    opacity 300ms ease,
+    transform 300ms ease,
+    border-color 300ms ease,
+    filter 300ms ease;
+}
+.setlist[data-focus] > li:not([data-for]) {
+  opacity: 0.62;
+  filter: grayscale(0.7);
+}
+.setlist[data-focus] > li[data-for] {
+  border-color: var(--primary);
+  transform: translateX(6px);
+}
+
+/* Visit Kit: language tiles and staggered songs. */
+.language-tile { align-items: center; }
+.language-glyph {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  transition: transform 300ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.language-tile:has(input:checked) .language-glyph {
+  background: var(--primary);
+  color: var(--on-primary);
+  transform: scale(1.08) rotate(-6deg);
+}
+.kit-songs li,
+.kit-starters li { animation: card-in 500ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
+.kit-songs li:nth-child(2),
+.kit-starters li:nth-child(2) { animation-delay: 90ms; }
+.kit-songs li:nth-child(3),
+.kit-starters li:nth-child(3) { animation-delay: 180ms; }
+.kit-starters li:nth-child(4) { animation-delay: 270ms; }
+
+/* Intake: a picture for each kind of favorite. */
+.field.group-legend {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-3);
+}
+.group-legend > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.group-art {
+  flex: none;
+  width: 52px;
+}
+
+/* Tour: a record for each stop; the current one spins. */
+.tour-track {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-1);
+}
+.tour-track li {
+  width: 22px;
+  opacity: 0.35;
+  transition: opacity 300ms ease, transform 300ms ease;
+}
+.tour-track li[data-state="done"] { opacity: 0.75; }
+.tour-track li[data-state="current"] {
+  opacity: 1;
+  transform: scale(1.2);
+}
+.tour-track li[data-state="current"] .brand-mark { animation: art-turn 3s linear infinite; }
+
+/* Evaluation: one figure per person. */
+.people {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.people-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.people-grid li {
+  width: 22px;
+  animation: pop-in 420ms cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 20ms);
+}
+.people-grid svg {
+  display: block;
+  width: 22px;
+  height: 26px;
+  fill: var(--chart-rest);
+}
+.people-grid li[data-abroad] svg { fill: var(--evidence-accent); }
+.people-caption { margin: 0; }
+.people-key {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: var(--space-2);
+  border-radius: 50%;
+  background: var(--evidence-accent);
+  vertical-align: -1px;
+}
+
+@media print {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .shelf,
+  .youth,
+  .how {
+    display: none;
+  }
+}
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }

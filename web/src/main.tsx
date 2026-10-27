@@ -3,6 +3,7 @@ import "@fontsource/atkinson-hyperlegible/700.css";
 import "@fontsource/crimson-pro/600.css";
 import "./styles.css";
 import "./art/art.css";
+import "./motion.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
