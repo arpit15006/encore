@@ -1713,7 +1713,20 @@ main {
   display: grid;
   grid-template-columns: 92px 1fr;
   column-gap: var(--space-4);
+  align-items: start;
+}
+.kit-sleeve {
+  margin-top: 6px;
+}
+.kit-film-row {
+  display: flex;
   align-items: center;
+  gap: var(--space-4);
+}
+.kit-film-row .kit-sleeve {
+  flex: none;
+  width: 120px;
+  margin: 0;
 }
 .kit-songs li > :not(.kit-sleeve) {
   grid-column: 2;

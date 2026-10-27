@@ -48,10 +48,15 @@ export function KitView({ content }: { content: VisitKitContent }) {
           <h2 id="kit-film">
             <Film aria-hidden="true" size={26} /> {words.film}
           </h2>
-          <p className="kit-film">
-            {content.film.name}
-            {content.film.year ? ` (${content.film.year})` : ""}
-          </p>
+          <div className="kit-film-row">
+            <span className="kit-sleeve" aria-hidden="true">
+              <Keepsake kind="films" seed={content.film.name} year={content.film.year ?? null} />
+            </span>
+            <p className="kit-film">
+              {content.film.name}
+              {content.film.year ? ` (${content.film.year})` : ""}
+            </p>
+          </div>
           {content.film.lowerConfidence && (
             <Notice tone="caution">
               <p>Lower confidence: this film was inferred from their music.</p>
