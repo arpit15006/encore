@@ -94,7 +94,8 @@
   text-transform: uppercase;
 }
 .art .tag-text {
-  fill: var(--art-paper);
+  /* Always light: it sits on the vinyl-black tag in both themes. */
+  fill: #fffaf2;
   font-family: var(--font-body);
   font-weight: 700;
 }

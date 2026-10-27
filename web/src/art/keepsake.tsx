@@ -186,7 +186,9 @@ export function Keepsake({ kind, seed, year, className }: { kind: KeepsakeKind; 
             <rect x="2" y="2" width="100" height="100" rx="3" />
           </clipPath>
         </defs>
-        <Record cx={100} cy={52} r={46} label={recordLabel} />
+        <g className="sleeve-record">
+          <Record cx={100} cy={52} r={46} label={recordLabel} />
+        </g>
         <g clipPath={`url(#${clip})`}>{pattern}</g>
         <rect className="o2" fill="none" x="2" y="2" width="100" height="100" rx="3" />
         {label && <DecadeTag x={8} y={80} text={label} />}
@@ -209,7 +211,9 @@ export function Keepsake({ kind, seed, year, className }: { kind: KeepsakeKind; 
           </g>
         ))}
         <g clipPath={`url(#${clip})`}>
-          <g transform="translate(12 -11) scale(1.26)">{pattern}</g>
+          <g className="film-roll">
+            <g transform="translate(12 -11) scale(1.26)">{pattern}</g>
+          </g>
         </g>
         {label && <DecadeTag x={18} y={64} text={label} />}
       </Art>
@@ -226,6 +230,11 @@ export function Keepsake({ kind, seed, year, className }: { kind: KeepsakeKind; 
       <rect className={`${tones[1] === "d" ? "t" : "d"} o2`} x="12" y="14" width="128" height="86" rx="14" />
       <g clipPath={`url(#${clip})`}>
         <g transform="translate(22 6) scale(0.98)">{pattern}</g>
+        <g className="tv-static">
+          {[0, 1, 2, 3, 4, 5, 6, 7].map((line) => (
+            <rect key={line} className="p" x="22" y={24 + line * 8} width="84" height="2" opacity="0.35" />
+          ))}
+        </g>
       </g>
       <rect className="o2" fill="none" x="22" y="22" width="84" height="66" rx="12" />
       <circle className="m o2" cx="124" cy="38" r="7" />

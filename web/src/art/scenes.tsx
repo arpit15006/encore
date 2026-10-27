@@ -69,23 +69,36 @@ function Postcard() {
  * It says what Encore does before a word is read: the things from someone's youth, kept together.
  */
 export function HeroScene() {
+  // Layers move by different amounts with the pointer (--px, --py set by the page), for depth.
   return (
     <Art viewBox="0 0 560 440" className="hero-art">
-      <Sunburst cx={280} cy={300} r={210} rays={22} />
+      <g className="depth-back">
+        <Sunburst cx={280} cy={300} r={210} rays={22} />
+      </g>
       <ellipse className="shade" cx="280" cy="412" rx="200" ry="14" />
 
-      <Sparkle x={150} y={70} size={11} tone="m" />
-      <Sparkle x={432} y={58} size={8} tone="t" />
-      <Sparkle x={512} y={282} size={9} tone="m" />
-      <Sparkle x={44} y={318} size={7} tone="t" />
-      <g className="float2">
-        <Note x={92} y={150} scale={1.25} tone="t" />
-      </g>
-      <g className="float3">
-        <Note x={470} y={140} scale={1} tone="g" />
-      </g>
-      <g className="float1">
-        <Note x={500} y={220} scale={0.8} tone="m" />
+      <g className="depth-far">
+        <g className="twinkle">
+          <Sparkle x={150} y={70} size={11} tone="m" />
+        </g>
+        <g className="twinkle later">
+          <Sparkle x={432} y={58} size={8} tone="t" />
+        </g>
+        <g className="twinkle latest">
+          <Sparkle x={512} y={282} size={9} tone="m" />
+        </g>
+        <g className="twinkle later">
+          <Sparkle x={44} y={318} size={7} tone="t" />
+        </g>
+        <g className="float2">
+          <Note x={92} y={150} scale={1.25} tone="t" />
+        </g>
+        <g className="float3">
+          <Note x={470} y={140} scale={1} tone="g" />
+        </g>
+        <g className="float1">
+          <Note x={500} y={220} scale={0.8} tone="m" />
+        </g>
       </g>
 
       {/* Lid, then the open top of the box. */}
@@ -93,17 +106,21 @@ export function HeroScene() {
       <path className="ln-light" d="M170 262 L414 266" />
       <path className="d" d="M140 302 L420 302 L404 282 L156 282 Z" />
 
-      <g transform="translate(300 168) rotate(7)">
-        <g className="float3">
-          <FilmStrip length={200} />
+      <g className="depth-mid">
+        <g transform="translate(300 168) rotate(7)">
+          <g className="float3">
+            <FilmStrip length={200} />
+          </g>
         </g>
-      </g>
-      <g className="float1">
-        <Record cx={222} cy={214} r={86} label="t" />
-      </g>
-      <g transform="translate(360 196) rotate(14)">
-        <g className="float2">
-          <Cassette body="g" />
+        <g className="float1">
+          <g className="turn-slow">
+            <Record cx={222} cy={214} r={86} label="t" />
+          </g>
+        </g>
+        <g transform="translate(360 196) rotate(14)">
+          <g className="float2">
+            <Cassette body="g" />
+          </g>
         </g>
       </g>
 
@@ -112,15 +129,19 @@ export function HeroScene() {
       <rect className="m" x="141.5" y="320" width="277" height="14" />
       <path className="ln2" d="M142 320 H418 M142 334 H418" />
       <rect className="p o2" x="236" y="352" width="88" height="40" rx="6" />
-      <Heart x={280} y={372} size={10} tone="t" />
+      <g className="beat">
+        <Heart x={280} y={372} size={10} tone="t" />
+      </g>
       <circle className="m o2" cx="160" cy="394" r="5" />
       <circle className="m o2" cx="400" cy="394" r="5" />
 
-      <g transform="translate(110 300) rotate(-11)">
-        <Polaroid />
-      </g>
-      <g transform="translate(456 344) rotate(-8)">
-        <Postcard />
+      <g className="depth-near">
+        <g transform="translate(110 300) rotate(-11)">
+          <Polaroid />
+        </g>
+        <g transform="translate(456 344) rotate(-8)">
+          <Postcard />
+        </g>
       </g>
     </Art>
   );
@@ -394,11 +415,13 @@ export function BrandMark() {
   );
 }
 
-/** A wavy groove line used to divide sections, like the sound in a record's groove. */
+/** A wavy groove line used to divide sections, like the sound in a record's groove. It flows sideways. */
 export function GrooveDivider() {
+  // One wave every 60 units, drawn a wave past the edge so it can scroll without a gap.
+  const waves = Array.from({ length: 22 }, (_, i) => `T${(i + 2) * 30} 12`).join(" ");
   return (
     <svg className="art groove-divider" viewBox="0 0 600 24" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <path className="trail" d="M0 12 Q15 2 30 12 T60 12 T90 12 T120 12 T150 12 T180 12 T210 12 T240 12 T270 12 T300 12 T330 12 T360 12 T390 12 T420 12 T450 12 T480 12 T510 12 T540 12 T570 12 T600 12" style={{ strokeDasharray: "none", strokeWidth: 2 }} />
+      <path className="trail" d={`M0 12 Q15 2 30 12 ${waves}`} style={{ strokeDasharray: "none", strokeWidth: 2 }} />
     </svg>
   );
 }
