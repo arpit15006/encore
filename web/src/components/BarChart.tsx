@@ -38,6 +38,8 @@ export function HorizontalBars({ bars, max, title, description }: { bars: Bar[];
             </text>
             {/* Anchored at the baseline, rounded only at the data end. */}
             <path
+              className="chart-bar"
+              style={{ animationDelay: `${index * 120}ms` }}
               d={`M${LABEL_WIDTH + 1},${y} h${width - 4} a4,4 0 0 1 4,4 v18 a4,4 0 0 1 -4,4 h${-(width - 4)} z`}
               fill={bar.highlight ? "var(--chart-accent)" : "var(--chart-rest)"}
             />
@@ -75,6 +77,8 @@ export function Histogram({ buckets, title, description }: { buckets: Array<{ la
             <title>{`Ages ${bucket.label}: ${bucket.count}`}</title>
             {h > 0 && (
               <path
+                className="chart-column"
+                style={{ animationDelay: `${index * 90}ms` }}
                 d={`M${x},${base} v${-(h - 4)} a4,4 0 0 1 4,-4 h${barWidth - 8} a4,4 0 0 1 4,4 v${h - 4} z`}
                 fill={bucket.highlight ? "var(--chart-accent)" : "var(--chart-rest)"}
               />

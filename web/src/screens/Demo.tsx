@@ -1,9 +1,10 @@
 import { Film, Loader2, Music, Star, Tv } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { api, ApiError, type DemoResident, type FavoriteKind } from "../api";
 import { Stage } from "../art/scenes";
 import { PlaceStamp } from "../art/stamps";
 import { Notice } from "../components/Notice";
+import { Reveal, Tilt } from "../motion";
 import { navigate } from "../router";
 
 const KIND_ICON: Record<FavoriteKind, typeof Music> = { music: Music, film: Film, tv: Tv, star: Star, book: Star };
@@ -51,7 +52,7 @@ export function Demo() {
           {residents.map((resident, index) => {
             const place = resident.grewUp.split(",")[0];
             return (
-              <li key={resident.id} className="door resident">
+              <Tilt as="li" key={resident.id} className="door resident" style={{ "--i": index } as CSSProperties}>
                 <div className="resident-top">
                   <div className="resident-stamp">
                     <PlaceStamp place={resident.grewUp} tilt={index % 2 ? 3 : -3} />
@@ -77,12 +78,12 @@ export function Demo() {
                   {opening === resident.id ? <Loader2 className="spin" aria-hidden="true" size={20} /> : null}
                   Open Memory Box
                 </button>
-              </li>
+              </Tilt>
             );
           })}
         </ul>
       )}
-      <section className="form-section" style={{ marginTop: "var(--space-6)" }} aria-labelledby="group-door">
+      <Reveal as="section" className="form-section" style={{ marginTop: "var(--space-6)" }} aria-labelledby="group-door">
         <div className="section-art">
           <Stage />
         </div>
@@ -91,7 +92,7 @@ export function Demo() {
         <button className="btn btn-quiet" onClick={() => navigate("/group")}>
           See the group setlist
         </button>
-      </section>
+      </Reveal>
     </>
   );
 }

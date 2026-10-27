@@ -1,6 +1,7 @@
 import { ArrowLeft, Loader2, Lock, Plus, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError, type Candidate, type Favorite, type FavoriteKind, type LoggedRequest, type Resolution } from "../api";
+import { CategoryArt } from "../art/icons";
 import { Notebook } from "../art/scenes";
 import { navigate } from "../router";
 import { Notice } from "../components/Notice";
@@ -405,9 +406,14 @@ export function Intake() {
         )}
         {GROUPS.map(({ kind, label, hint }) => (
           <fieldset key={kind} className="favorite-group">
-            <legend className="field" style={{ marginBottom: "var(--space-2)" }}>
-              <strong>{label}</strong>
-              <span className="hint">{hint}</span>
+            <legend className="field group-legend" style={{ marginBottom: "var(--space-2)" }}>
+              <span className="group-art">
+                <CategoryArt kind={kind} />
+              </span>
+              <span>
+                <strong>{label}</strong>
+                <span className="hint">{hint}</span>
+              </span>
             </legend>
             {drafts[kind].map((text, index) => (
               <div key={index} className="favorite-row">

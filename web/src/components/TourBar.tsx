@@ -1,5 +1,6 @@
 import { ArrowRight, X } from "lucide-react";
 import { useState } from "react";
+import { BrandMark } from "../art/scenes";
 import { navigate } from "../router";
 import { goToStep, TOUR } from "../tour";
 
@@ -14,6 +15,13 @@ export function TourBar({ step }: { step: number }) {
     <aside className="tour-bar" aria-label="Guided tour">
       <div className="container tour-inner">
         <div>
+          <ol className="tour-track" aria-hidden="true">
+            {TOUR.map((stop, index) => (
+              <li key={stop.title} data-state={index + 1 < step ? "done" : index + 1 === step ? "current" : "next"}>
+                <BrandMark />
+              </li>
+            ))}
+          </ol>
           <p className="tour-step">
             Tour {step} of {TOUR.length}: {current.title}
           </p>

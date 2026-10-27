@@ -1,8 +1,9 @@
 import { Check, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { api, ApiError, type ComparisonColumn, type LoggedRequest } from "../api";
 import { SystemBadge, Turntable } from "../art/scenes";
 import { Notice } from "../components/Notice";
+import { Reveal } from "../motion";
 import { ResidentHeader } from "../components/ResidentHeader";
 import { WhatQlooSees } from "../components/WhatQlooSees";
 import { useResident } from "../useResident";
@@ -14,10 +15,10 @@ const VERDICT: Record<ComparisonColumn["system"], string> = {
   encore: "Built only from their favorites, then ordered so their youth comes first. Every pick shows Qloo's evidence.",
 };
 
-function Column({ column }: { column: ComparisonColumn }) {
+function Column({ column, index }: { column: ComparisonColumn; index: number }) {
   const empty = column.items.length === 0;
   return (
-    <section className="compare-col" data-system={column.system} aria-labelledby={`col-${column.system}`}>
+    <Reveal as="section" delay={index * 180} className="compare-col" data-system={column.system} aria-labelledby={`col-${column.system}`}>
       <div className="compare-head">
         <div className="compare-title">
           <div className="compare-badge">
@@ -45,8 +46,8 @@ function Column({ column }: { column: ComparisonColumn }) {
         </Notice>
       ) : (
         <ol className="compare-list">
-          {column.items.map((item) => (
-            <li key={item.name}>
+          {column.items.map((item, position) => (
+            <li key={item.name} style={{ "--i": position } as CSSProperties}>
               <span>{item.name}</span>
               {item.inYouth === true && (
                 <span className="tag-yes">
@@ -63,7 +64,7 @@ function Column({ column }: { column: ComparisonColumn }) {
         </ol>
       )}
       <p className="compare-verdict">{VERDICT[column.system]}</p>
-    </section>
+    </Reveal>
   );
 }
 
@@ -105,8 +106,8 @@ export function CompareScreen({ residentId }: { residentId: string }) {
         the end of their youth, using Qloo's career years.
       </p>
       <div className="compare-grid">
-        {data.columns.map((column) => (
-          <Column key={column.system} column={column} />
+        {data.columns.map((column, index) => (
+          <Column key={column.system} column={column} index={index} />
         ))}
       </div>
       <WhatQlooSees requests={data.whatQlooSaw} favorites={view.favorites} />

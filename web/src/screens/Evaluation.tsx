@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { api, ApiError, type Evaluation, type EvaluationSystem } from "../api";
 import { HorizontalBars, Histogram } from "../components/BarChart";
 import { Island } from "../art/scenes";
 import { Notice } from "../components/Notice";
+import { Reveal } from "../motion";
 
 const pct = (value: number | null) => (value == null ? "not measurable" : `${Math.round(value * 100)}%`);
 const SHORT: Record<EvaluationSystem["id"], string> = {
@@ -39,6 +40,27 @@ function SystemsTable({ systems, caption }: { systems: EvaluationSystem[]; capti
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** The sample as people: one figure per guest, colored when they were born outside the UK. */
+function People({ evaluated, bornAbroad, years }: { evaluated: number; bornAbroad: number; years: [number, number] }) {
+  return (
+    <Reveal className="people">
+      <ul className="people-grid" aria-hidden="true">
+        {Array.from({ length: evaluated }, (_, index) => (
+          <li key={index} data-abroad={index < bornAbroad ? "" : undefined} style={{ "--i": index } as CSSProperties}>
+            <svg viewBox="0 0 20 24">
+              <circle cx="10" cy="6" r="5" />
+              <path d="M1 24 Q1 13 10 13 Q19 13 19 24 Z" />
+            </svg>
+          </li>
+        ))}
+      </ul>
+      <p className="people-caption">
+        <strong>{evaluated} real people</strong>, born {years[0]}–{years[1]}. <span className="people-key" /> {bornAbroad} born outside the UK.
+      </p>
+    </Reveal>
   );
 }
 
@@ -85,7 +107,9 @@ export function EvaluationScreen() {
         </div>
       </div>
 
-      <section className="form-section" aria-labelledby="eval-hits">
+      <People evaluated={data.sample.evaluated} bornAbroad={data.sample.bornAbroad} years={data.sample.birthYears} />
+
+      <Reveal as="section" className="form-section" aria-labelledby="eval-hits">
         <h2 id="eval-hits">Who found the hidden favorites?</h2>
         <p className="hint">
           Share of {data.sample.evaluated} people for whom the system's top 20 contained at least one of their hidden artists.
@@ -121,9 +145,9 @@ export function EvaluationScreen() {
             <SystemsTable systems={data.systemsBornAbroad} caption={`The ${data.sample.bornAbroad} people born outside the UK`} />
           </>
         )}
-      </section>
+      </Reveal>
 
-      <section className="form-section" aria-labelledby="eval-bump">
+      <Reveal as="section" className="form-section" aria-labelledby="eval-bump">
         <h2 id="eval-bump">Do lifetime favorites come from youth?</h2>
         <p className="hint">{bump.note}</p>
         <Histogram
@@ -136,9 +160,9 @@ export function EvaluationScreen() {
           10 to 29, and {earlyCount} ({Math.round((earlyCount / Math.max(1, bump.total)) * 100)}%) before the guest was 10, often their parents' music.
           So this data doesn't show a clean youth peak. Encore searches from age 10; widening the window downwards is our next step.
         </p>
-      </section>
+      </Reveal>
 
-      <section className="form-section" aria-labelledby="eval-method">
+      <Reveal as="section" className="form-section" aria-labelledby="eval-method">
         <h2 id="eval-method">Method and limits</h2>
         <ul className="method-list">
           {Object.entries(data.method).map(([key, text]) => (
@@ -157,7 +181,7 @@ export function EvaluationScreen() {
           </a>
           . Only aggregate results are published. Names were never sent to Qloo or the AI model.
         </p>
-      </section>
+      </Reveal>
     </div>
   );
 }

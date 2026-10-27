@@ -7,10 +7,10 @@ import { ResidentHeader } from "../components/ResidentHeader";
 import { useResident } from "../useResident";
 import { KitView } from "./VisitKit";
 
-const LANGUAGES: Array<{ id: Language; label: string }> = [
-  { id: "en", label: "English" },
-  { id: "hi", label: "हिन्दी (Hindi)" },
-  { id: "es", label: "Español (Spanish)" },
+const LANGUAGES: Array<{ id: Language; label: string; glyph: string }> = [
+  { id: "en", label: "English", glyph: "Aa" },
+  { id: "hi", label: "हिन्दी (Hindi)", glyph: "अ" },
+  { id: "es", label: "Español (Spanish)", glyph: "Ñ" },
 ];
 
 export function VisitKitManager({ residentId }: { residentId: string }) {
@@ -81,8 +81,11 @@ export function VisitKitManager({ residentId }: { residentId: string }) {
           </legend>
           <div className="language-options">
             {LANGUAGES.map((option) => (
-              <label key={option.id} className="candidate">
+              <label key={option.id} className="candidate language-tile">
                 <input type="radio" name="language" checked={language === option.id} onChange={() => setLanguage(option.id)} />
+                <span className="language-glyph" aria-hidden="true" lang={option.id}>
+                  {option.glyph}
+                </span>
                 <span className="candidate-name">{option.label}</span>
               </label>
             ))}
