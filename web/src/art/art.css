@@ -1,0 +1,172 @@
+/* Illustration palette. Art is decorative, so it doesn't need text contrast, but outlines keep shapes readable. */
+:root {
+  --art-paper: #fffaf2;
+  --art-ink: #2a1f17;
+  --art-terracotta: #c4552d;
+  --art-mustard: #e3a83c;
+  --art-teal: #2f7f86;
+  --art-rose: #dd8d7f;
+  --art-cream: #f3e2cc;
+  --art-deep: #7a3a1c;
+  --art-vinyl: #2a211b;
+  --art-groove: rgb(255 250 242 / 0.13);
+  --art-sky-peach: #f8dcc2;
+  --art-sky-teal: #d3e7e5;
+  --art-sky-gold: #f6e2b2;
+  --art-sun: #f6e3d6;
+  --art-sun-ray: #f1d6c2;
+  --art-shade: rgb(42 31 23 / 0.1);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --art-paper: #3a2f27;
+    --art-ink: #e8dccd;
+    --art-terracotta: #d0683f;
+    --art-mustard: #d39d3a;
+    --art-teal: #4f9da3;
+    --art-rose: #c47d70;
+    --art-cream: #4a3b30;
+    --art-deep: #26190f;
+    --art-vinyl: #120e0b;
+    --art-groove: rgb(255 250 242 / 0.1);
+    --art-sky-peach: #4a3226;
+    --art-sky-teal: #20393b;
+    --art-sky-gold: #463a1f;
+    --art-sun: #2e221a;
+    --art-sun-ray: #382a20;
+    --art-shade: rgb(0 0 0 / 0.3);
+  }
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.art .p { fill: var(--art-paper); }
+.art .i { fill: var(--art-ink); }
+.art .t { fill: var(--art-terracotta); }
+.art .m { fill: var(--art-mustard); }
+.art .g { fill: var(--art-teal); }
+.art .r { fill: var(--art-rose); }
+.art .c { fill: var(--art-cream); }
+.art .d { fill: var(--art-deep); }
+.art .v { fill: var(--art-vinyl); }
+.art .sky1 { fill: var(--art-sky-peach); }
+.art .sky2 { fill: var(--art-sky-teal); }
+.art .sky3 { fill: var(--art-sky-gold); }
+.art .sun-disc { fill: var(--art-sun); }
+.art .sun-ray { fill: var(--art-sun-ray); }
+.art .shade { fill: var(--art-shade); }
+.art .beam { fill: var(--art-mustard); opacity: 0.22; }
+/* Outlines: add "o" (or the thinner "o2") to any filled shape. */
+.art .o,
+.art .o2 {
+  stroke: var(--art-ink);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+.art .o { stroke-width: 3; }
+.art .o2 { stroke-width: 2; }
+.art .ln,
+.art .ln2,
+.art .ln-light,
+.art .trail {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.art .ln { stroke: var(--art-ink); stroke-width: 3; }
+.art .ln2 { stroke: var(--art-ink); stroke-width: 2; opacity: 0.55; }
+.art .ln-light { stroke: var(--art-paper); stroke-width: 2; opacity: 0.6; }
+.art .trail { stroke: var(--art-terracotta); stroke-width: 3; stroke-dasharray: 2 9; }
+.art .groove { fill: none; stroke: var(--art-groove); stroke-width: 1.4; }
+.art .shine { fill: none; stroke: rgb(255 250 242 / 0.28); stroke-width: 4; stroke-linecap: round; }
+.art .label-ring { fill: none; stroke: rgb(255 250 242 / 0.45); stroke-width: 1.2; }
+/* Stamp perforations: dots in the color of the card behind them. */
+.art .perf { fill: none; stroke: var(--surface); stroke-width: 7; stroke-dasharray: 0 10; stroke-linecap: round; }
+.art .stamp-text {
+  fill: var(--art-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.art .tag-text {
+  fill: var(--art-paper);
+  font-family: var(--font-body);
+  font-weight: 700;
+}
+
+/* Gentle motion: items drift, records turn. All of it stops under reduced motion (see styles.css). */
+.art .float1,
+.art .float2,
+.art .float3 {
+  transform-box: fill-box;
+  animation: art-float 6s ease-in-out infinite;
+}
+.art .float2 { animation-duration: 7.5s; animation-delay: -2s; }
+.art .float3 { animation-duration: 5s; animation-delay: -1s; }
+@keyframes art-float {
+  50% { transform: translateY(-6px) rotate(1.5deg); }
+}
+.art .turn {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: art-turn 3.2s linear infinite;
+}
+@keyframes art-turn {
+  to { transform: rotate(360deg); }
+}
+.art .rise {
+  transform-box: fill-box;
+  animation: art-rise 3.6s ease-out infinite;
+  opacity: 0;
+}
+.art .rise.later { animation-delay: 1.2s; }
+.art .rise.latest { animation-delay: 2.4s; }
+@keyframes art-rise {
+  15% { opacity: 1; }
+  100% { transform: translate(14px, -46px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .art .float1,
+  .art .float2,
+  .art .float3,
+  .art .turn {
+    animation: none;
+  }
+  .art .rise {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Paper grain over the whole page: a tiny tiled noise texture, kept faint. */
+body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .35 0 0 0 0 .24 0 0 0 0 .15 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.09'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  body {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .92 0 0 0 0 .82 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  }
+}
+@media print {
+  body {
+    background-image: none;
+  }
+}
+
+/* Colored strokes for generated patterns. */
+.art .ln-t, .art .ln-m, .art .ln-g, .art .ln-r, .art .ln-d, .art .ln-c {
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+.art .ln-t { stroke: var(--art-terracotta); }
+.art .ln-m { stroke: var(--art-mustard); }
+.art .ln-g { stroke: var(--art-teal); }
+.art .ln-r { stroke: var(--art-rose); }
+.art .ln-d { stroke: var(--art-deep); }
+.art .ln-c { stroke: var(--art-cream); }
