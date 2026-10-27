@@ -31,8 +31,11 @@ Encore is a care-team agent. A family describes their relative in their own word
 ## Design
 
 - Two doors on the landing page: **try it on someone you love**, or a **90-second guided tour**.
+- Every illustration is original and drawn in code (no album art, posters or stills, which the rules forbid): a keepsake-box hero that follows the pointer, postage stamps for each resident's hometown, and a **generated keepsake for every pick**: a record sleeve, film frame or TV in the style of its decade, seeded by the item so it never changes.
+- The core idea is something you can play with: drag a birth year and watch which decades light up as that person's youth.
+- Interactive throughout: records slide out of their sleeves, "Lit up" bursts into sparkles, the group setlist lights up one resident's songs, numbers count up and charts grow. All motion stops under the reduced-motion setting.
 - Tablet-first staff screens with large one-tap reaction buttons; large type for older family members; warm, non-clinical copy.
-- WCAG AA contrast checked for every color pair in light and dark mode; works on phones; respects reduced-motion, reduced-transparency and increased-contrast settings.
+- WCAG AA: zero axe-core violations across every screen at phone, tablet and desktop widths in light and dark mode; respects reduced-motion, reduced-transparency and increased-contrast settings.
 - Every state is designed: empty, error, partial and "lower confidence" (for example, TV picks inferred from music are labelled as such).
 - "What Qloo sees" and "How Encore decided" panels on every plan.
 
@@ -66,7 +69,8 @@ Testing with caregivers and activity staff, widening the youth window downwards 
 2. Or **Start**: describe a relative in your own words (no names), click **Fill in the form for me**, confirm the matches, and build their Memory Box.
 3. On any Memory Box, tap a reaction (try **Lit up**, then **Distressed** on a film), open **How Encore decided**, and try **Ask Encore**.
 4. **Visit Kit** tab: make one in Hindi and open the link on your phone.
-5. **Demo care home** → **See the group setlist**; and **How we tested it** for the evaluation.
+5. **Demo care home** → **See the group setlist**, then pick a resident to light up their songs; and **How we tested it** for the evaluation.
+6. On the landing page, drag the **birth year** slider to see the youth window move.
 
 No login is needed. Demo residents are fictional, and each visitor gets a private copy.
 
