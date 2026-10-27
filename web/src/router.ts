@@ -15,8 +15,11 @@ export function navigate(to: string): void {
     window.scrollTo({ top: 0 });
   };
   const motionOk = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (motionOk && "startViewTransition" in document) document.startViewTransition(go);
-  else go();
+  // A hidden tab can't animate; the browser would abort the transition with an error.
+  if (!motionOk || document.hidden || !("startViewTransition" in document)) return go();
+  const transition = document.startViewTransition(go);
+  // An aborted transition is harmless (the new page still renders), so don't surface it as an error.
+  for (const step of [transition.ready, transition.finished, transition.updateCallbackDone]) step.catch(() => undefined);
 }
 
 export function useLocation(): { path: string; search: URLSearchParams } {

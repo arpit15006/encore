@@ -3,6 +3,7 @@ import { promisify } from "node:util";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { normalizeEnvelope, isCacheable, shouldRetry, type QlooEnvelope } from "./envelope.js";
+import { InsightsWorker, WorkerUnavailable } from "./insightsWorker.js";
 import type { QlooStore } from "./store.js";
 
 /** The Qloo MCP tools Encore uses, each with a documented job. `qloo_trends` has no job yet, so it is not exposed. */
@@ -31,6 +32,8 @@ export interface QlooCallOptions {
 
 const MAX_RETRIES = 2;
 const execFileAsync = promisify(execFile);
+/** Generous, because a small host (0.1 CPU) is slow; failures are never cached, so a timeout costs a retry. */
+const INSIGHTS_TIMEOUT_MS = 120_000;
 
 /** Entity types Encore requests from the Insights API. */
 export type InsightsType = "artist" | "movie" | "tv_show" | "book" | "person";
@@ -62,6 +65,7 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
  */
 export class QlooClient {
   private client: Client | undefined;
+  private readonly worker = new InsightsWorker();
   private connecting: Promise<Client> | undefined;
   private tools: Awaited<ReturnType<Client["listTools"]>>["tools"] = [];
 
@@ -150,7 +154,7 @@ export class QlooClient {
     const cliArgs = ["api", "insights", "-t", request.type, "-s", request.signalIds.join(","), "-n", String(request.take)];
     cliArgs.push("--params", JSON.stringify(request.params ?? {}), "--json");
     try {
-      const { stdout } = await execFileAsync("qloo", cliArgs, { env: process.env, maxBuffer: 64 * 1024 * 1024, timeout: 30_000 });
+      const stdout = await this.runApi(cliArgs);
       const parsed: unknown = JSON.parse(stdout);
       // The raw endpoint returns a bare list of entities; wrap it in the kit's envelope shape.
       if (Array.isArray(parsed)) return normalizeEnvelope<T>({ status: "ok", results: parsed, result_count: parsed.length });
@@ -182,7 +186,24 @@ export class QlooClient {
     }
   }
 
+  /** Loads the harness for raw Insights calls ahead of the first request. */
+  warm(): Promise<void> {
+    return this.worker.start().catch(() => undefined);
+  }
+
+  /** `qloo api …` inside the long-lived worker; if the worker itself fails, the CLI is run directly. */
+  private async runApi(cliArgs: string[]): Promise<string> {
+    try {
+      return await this.worker.run(cliArgs, INSIGHTS_TIMEOUT_MS);
+    } catch (error) {
+      if (!(error instanceof WorkerUnavailable)) throw error;
+      const { stdout } = await execFileAsync("qloo", cliArgs, { env: process.env, maxBuffer: 64 * 1024 * 1024, timeout: INSIGHTS_TIMEOUT_MS });
+      return stdout;
+    }
+  }
+
   async close(): Promise<void> {
+    this.worker.close();
     await this.client?.close();
     this.client = undefined;
   }

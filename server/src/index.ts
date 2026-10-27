@@ -48,6 +48,9 @@ process.on("SIGINT", () => void shutdown("SIGINT"));
 
 await app.listen({ port: config.PORT, host: config.HOST });
 
+// Load the harness for raw Insights calls now, so the first visitor doesn't wait for it.
+void qloo.warm();
+
 // Warm every demo resident's Qloo and model answers in the background. With a persistent volume
 // this costs Qloo quota once; afterwards judges are always served from cache.
 if (config.PREWARM) {
