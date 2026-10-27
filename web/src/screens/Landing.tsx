@@ -1,11 +1,14 @@
-import { BarChart3, CalendarClock, Loader2, Music4, ShieldCheck, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowRight, Loader2 } from "lucide-react";
+import { useEffect, useState, type MouseEvent, type ReactNode } from "react";
 import { api, type Evaluation } from "../api";
+import { GlobeStamps, LockedBox, PriceTag, Stopwatch } from "../art/icons";
 import { CareHome, HeroScene, Island, KeepsakeTrio, Stage } from "../art/scenes";
+import { HowItWorks, RecordShelf, YouthWindow } from "../components/Showcase";
+import { CountUp, Reveal, Tilt, usePointerVars } from "../motion";
 import { navigate } from "../router";
 import { startTour } from "../tour";
 
-const pct = (value: number) => `${Math.round(value * 100)}%`;
+const pct = (value: number) => Math.round(value * 100);
 
 /**
  * Real measured numbers, shown only once the evaluation has been run. Includes where Encore loses:
@@ -24,37 +27,34 @@ function Proof() {
   const encoreAbroad = find(data.systemsBornAbroad, "encore");
   const plainAbroad = find(data.systemsBornAbroad, "plain_ai");
   if (!encore || !plain || !naive || !encoreAbroad || !plainAbroad) return null;
+  const stats = [
+    { value: pct(encoreAbroad.hitRate), vs: pct(plainAbroad.hitRate), text: `Born outside the UK (${data.sample.bornAbroad} people): Encore found a hidden favorite; a plain AI model ${pct(plainAbroad.hitRate)}%.` },
+    { value: pct(encore.youthShare ?? 0), vs: pct(naive.youthShare ?? 0), text: "Of Encore's picks come from their youth, against Qloo used naively." },
+    { value: pct(encore.hitRate), vs: pct(plain.hitRate), text: "Across everyone, the plain AI model did better, mostly on famous British music." },
+  ];
   return (
-    <section className="proof" aria-labelledby="proof-heading">
+    <Reveal as="section" className="proof" aria-labelledby="proof-heading">
       <div className="proof-art">
         <Island />
       </div>
       <h2 id="proof-heading">Tested on real people's lifetime favorites</h2>
       <p className="hint">
-        {data.sample.evaluated} guests of BBC Radio's <em>Desert Island Discs</em>. Each system got three of a guest's artists and had to find
-        the ones we hid. A small sample, so read these as early evidence.
+        {data.sample.evaluated} guests of BBC Radio's <em>Desert Island Discs</em>. Each system got three of their artists and had to find the
+        hidden rest. A small sample: early evidence.
       </p>
       <div className="proof-stats">
-        <div>
-          <p className="proof-number">
-            {pct(encoreAbroad.hitRate)} <span className="proof-vs">vs {pct(plainAbroad.hitRate)}</span>
-          </p>
-          <p>
-            For the {data.sample.bornAbroad} born outside the UK, Encore found a hidden favorite; a plain AI model did for {pct(plainAbroad.hitRate)}.
-          </p>
-        </div>
-        <div>
-          <p className="proof-number">
-            {encore.youthShare != null ? pct(encore.youthShare) : "–"} <span className="proof-vs">vs {naive.youthShare != null ? pct(naive.youthShare) : "–"}</span>
-          </p>
-          <p>Of Encore's picks come from their youth, against Qloo used naively with location and age.</p>
-        </div>
-        <div>
-          <p className="proof-number">
-            {pct(encore.hitRate)} <span className="proof-vs">vs {pct(plain.hitRate)}</span>
-          </p>
-          <p>Across everyone, the plain AI model did better, mostly on famous British music it knows well.</p>
-        </div>
+        {stats.map((stat, index) => (
+          <Reveal key={stat.text} delay={index * 150} className="proof-stat">
+            <p className="proof-number">
+              <CountUp value={stat.value} /> <span className="proof-vs">vs {stat.vs}%</span>
+            </p>
+            <div className="meter" aria-hidden="true">
+              <span className="meter-bar" style={{ width: `${stat.value}%` }} />
+              <span className="meter-mark" style={{ left: `${stat.vs}%` }} />
+            </div>
+            <p>{stat.text}</p>
+          </Reveal>
+        ))}
       </div>
       <a
         href="/evaluation"
@@ -65,82 +65,99 @@ function Proof() {
       >
         See the method and every number
       </a>
-    </section>
+    </Reveal>
+  );
+}
+
+function Tile({ art, title, children, delay = 0 }: { art: ReactNode; title: string; children: ReactNode; delay?: number }) {
+  return (
+    <Reveal className="tile" delay={delay}>
+      <div className="tile-art">{art}</div>
+      <h3>{title}</h3>
+      <p>{children}</p>
+    </Reveal>
   );
 }
 
 /** Who pays, for the people deciding whether Encore is a business. Figures are sourced in the README. */
 function ForCareHomes() {
   return (
-    <section className="form-section care-homes" aria-labelledby="care-homes-heading">
+    <Reveal as="section" className="form-section care-homes" aria-labelledby="care-homes-heading">
       <div className="section-art">
         <Stage />
       </div>
       <h2 id="care-homes-heading">For care homes</h2>
-      <div className="care-grid">
-        <div>
-          <h3>Who it's for</h3>
-          <p>
-            Activity directors at the 14,742 US nursing homes and about 32,000 assisted-living communities. US nursing homes must offer
-            activities that match each resident's interests, and gather those interests from family when residents can't say.
-          </p>
-        </div>
-        <div>
-          <h3>What it saves</h3>
-          <p>
-            A family's description becomes a plan in seconds: songs, films, starters and a group setlist, all from that person's youth and
-            culture. Reactions record what landed, session by session.
-          </p>
-        </div>
-        <div>
-          <h3>How it would earn</h3>
-          <p>
-            A small monthly fee per resident, paid by the care home. Visit Kits stay free for families; they're how families discover Encore
-            and bring it to their relative's home.
-          </p>
-        </div>
+      <div className="tiles">
+        <Tile art={<CareHome />} title="Who it's for">
+          Activity directors at 14,742 US nursing homes and ~32,000 assisted-living communities, who must match activities to each resident.
+        </Tile>
+        <Tile art={<Stopwatch />} title="What it saves" delay={120}>
+          A family's description becomes a full plan in seconds, and reactions record what landed.
+        </Tile>
+        <Tile art={<PriceTag />} title="How it earns" delay={240}>
+          A monthly fee per resident, paid by the home. Visit Kits stay free and bring families in.
+        </Tile>
       </div>
       <p className="hint">Encore supports activities and engagement; it doesn't certify compliance or replace care professionals.</p>
-    </section>
+    </Reveal>
+  );
+}
+
+function MoreLink({ to, art, label }: { to: string; art: ReactNode; label: string }) {
+  return (
+    <Tilt
+      as="a"
+      className="more-card"
+      href={to}
+      onClick={(event: MouseEvent) => {
+        event.preventDefault();
+        navigate(to);
+      }}
+    >
+      <span className="more-art">{art}</span>
+      <span className="more-label">
+        {label} <ArrowRight aria-hidden="true" size={18} />
+      </span>
+    </Tilt>
   );
 }
 
 export function Landing() {
   const [starting, setStarting] = useState(false);
+  const hero = usePointerVars<HTMLDivElement>();
   return (
     <>
       <div className="hero">
         <div className="hero-text">
           <p className="eyebrow">For dementia care teams and families</p>
           <h1>The songs, films and shows that still bring them back.</h1>
-          <p className="lede">
-            Tell Encore a few things your loved one enjoyed when they were young. It finds the music, films and TV from their youth that
-            people with the same tastes love, so visits and activities feel familiar. It learns from how they respond.
-          </p>
+          <p className="lede">Tell Encore what they loved when they were young. It finds the familiar music, films and TV of their youth, and learns from how they respond.</p>
         </div>
-        <div className="hero-visual">
+        <div className="hero-visual" ref={hero.ref} onPointerMove={hero.onPointerMove} onPointerLeave={hero.onPointerLeave}>
           <HeroScene />
         </div>
       </div>
 
+      <RecordShelf />
+
       <div className="doors">
-        <section className="door" aria-labelledby="door-try">
+        <Tilt as="section" className="door" aria-labelledby="door-try">
           <div className="door-visual">
             <KeepsakeTrio />
           </div>
           <h2 id="door-try">Try it on someone you love</h2>
-          <p>Their birth year and a few favorites, in your own words. About two minutes. No names, no sign-up.</p>
+          <p>Birth year and a few favorites. Two minutes, no names, no sign-up.</p>
           <button className="btn btn-primary" onClick={() => navigate("/start")}>
-            Start
+            Start <ArrowRight aria-hidden="true" size={20} />
           </button>
-        </section>
+        </Tilt>
 
-        <section className="door" aria-labelledby="door-tour">
+        <Tilt as="section" className="door" aria-labelledby="door-tour">
           <div className="door-visual">
             <CareHome />
           </div>
           <h2 id="door-tour">Take the 90-second tour</h2>
-          <p>Follow a fictional resident who grew up in Mumbai: the comparison, her Memory Box, a reaction, a Visit Kit, and the test results.</p>
+          <p>Follow a fictional resident who grew up in Mumbai, from first match to Visit Kit.</p>
           <button
             className="btn btn-quiet"
             disabled={starting}
@@ -151,62 +168,29 @@ export function Landing() {
           >
             {starting ? <Loader2 className="spin" aria-hidden="true" size={20} /> : null} Start the tour
           </button>
-        </section>
+        </Tilt>
       </div>
 
+      <HowItWorks />
+      <Reveal>
+        <YouthWindow />
+      </Reveal>
       <Proof />
       <ForCareHomes />
 
-      <div className="promise">
-        <div className="promise-item">
-          <CalendarClock aria-hidden="true" size={24} />
-          <p>
-            <strong>Familiar first.</strong> Most recommenders hunt for something new. Encore looks for what they met between about ages 10
-            and 30, when memories stick best.
-          </p>
-        </div>
-        <div className="promise-item">
-          <Users aria-hidden="true" size={24} />
-          <p>
-            <strong>Their culture, not a stereotype.</strong> Picks come from their own favorites, not from what's popular where they live now.
-          </p>
-        </div>
-        <div className="promise-item">
-          <ShieldCheck aria-hidden="true" size={24} />
-          <p>
-            <strong>Private by design.</strong> Qloo only ever sees the favorites you confirm and a range of years. Reactions stay with Encore.
-          </p>
-        </div>
+      <div className="tiles promise">
+        <Tile art={<GlobeStamps />} title="Their culture, not a stereotype">
+          Picks grow from their own favorites, not from what's popular where they live now.
+        </Tile>
+        <Tile art={<LockedBox />} title="Private by design" delay={120}>
+          Qloo only sees the favorites you confirm and a range of years. Reactions stay with Encore.
+        </Tile>
       </div>
 
       <div className="more-links">
-        <a
-          href="/demo"
-          onClick={(event) => {
-            event.preventDefault();
-            navigate("/demo");
-          }}
-        >
-          <Users aria-hidden="true" size={20} /> Visit the demo care home
-        </a>
-        <a
-          href="/group"
-          onClick={(event) => {
-            event.preventDefault();
-            navigate("/group");
-          }}
-        >
-          <Music4 aria-hidden="true" size={20} /> Group session setlist
-        </a>
-        <a
-          href="/evaluation"
-          onClick={(event) => {
-            event.preventDefault();
-            navigate("/evaluation");
-          }}
-        >
-          <BarChart3 aria-hidden="true" size={20} /> How we tested it
-        </a>
+        <MoreLink to="/demo" art={<CareHome />} label="Visit the demo care home" />
+        <MoreLink to="/group" art={<Stage />} label="Group session setlist" />
+        <MoreLink to="/evaluation" art={<Island />} label="How we tested it" />
       </div>
     </>
   );
