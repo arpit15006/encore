@@ -1,0 +1,14 @@
+# One-click deploy on Render's free web service (Docker). Keys are entered in Render's dashboard.
+services:
+  - type: web
+    name: encore
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: QLOO_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
