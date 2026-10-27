@@ -1,5 +1,7 @@
 # Encore
 
+[![CI](https://github.com/arpit15006/encore/actions/workflows/ci.yml/badge.svg)](https://github.com/arpit15006/encore/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 *The songs, films and shows that still bring them back.*
 
 Encore is a care-team agent for dementia and elder care. A family describes what someone loved when they were young; Encore uses [Qloo](https://www.qloo.com/)'s taste graph to find the music, films and TV from **their own youth and culture**, turns it into activities, Visit Kits and group setlists, and **learns from how the person responds**. It supports engagement and person-centered activities; it is not a medical tool and doesn't replace music therapists or care professionals.
