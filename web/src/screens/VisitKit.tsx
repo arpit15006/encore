@@ -1,6 +1,8 @@
 import { ExternalLink, Film, MessageCircleHeart, Music, Printer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, ApiError, type VisitKitContent } from "../api";
+import { Keepsake } from "../art/keepsake";
+import { Envelope } from "../art/scenes";
 import { Notice } from "../components/Notice";
 import { appleMusicSearch, youTubeSearch } from "../listen";
 
@@ -22,6 +24,9 @@ export function KitView({ content }: { content: VisitKitContent }) {
         <ol className="kit-songs">
           {content.songs.map((song) => (
             <li key={song.artist}>
+              <span className="kit-sleeve" aria-hidden="true">
+                <Keepsake kind="music" seed={song.artist} year={null} />
+              </span>
               <span className="kit-song-name">{song.song ? `“${song.song}”` : song.artist}</span>
               {song.song && <span className="kit-song-artist">{song.artist}</span>}
               <span className="listen kit-listen">
@@ -93,6 +98,9 @@ export function PublicVisitKit({ token }: { token: string }) {
   if (error)
     return (
       <div className="stack">
+        <div className="empty-art-wrap">
+          <Envelope />
+        </div>
         <h1>Visit Kit unavailable</h1>
         <Notice tone="info">
           <p>{error}</p>
@@ -103,16 +111,19 @@ export function PublicVisitKit({ token }: { token: string }) {
   const words = HEADINGS[kit.content.language];
   return (
     <div className="stack">
-      <div className="box-header">
+      <div className="page-hero">
         <div>
           <h1 lang={kit.content.language}>{words.title}</h1>
           <p className="lede">
             Picked from their youth, {kit.content.youth.start}–{kit.content.youth.end}, using what they loved.
           </p>
+          <button className="btn btn-quiet no-print" onClick={() => window.print()}>
+            <Printer aria-hidden="true" size={20} /> Print
+          </button>
         </div>
-        <button className="btn btn-quiet no-print" onClick={() => window.print()}>
-          <Printer aria-hidden="true" size={20} /> Print
-        </button>
+        <div className="page-hero-art no-print">
+          <Envelope />
+        </div>
       </div>
       <KitView content={kit.content} />
       <p className="hint">This private page expires on {new Date(kit.expiresAt).toLocaleDateString()}.</p>

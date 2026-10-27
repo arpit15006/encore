@@ -1,6 +1,8 @@
-import { Loader2, Printer, Users } from "lucide-react";
+import { Printer, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, ApiError, type GroupPlan } from "../api";
+import { Keepsake } from "../art/keepsake";
+import { Stage, Turntable } from "../art/scenes";
 import { Notice } from "../components/Notice";
 
 const shortLabel = (label: string) => label.replace("Grew up in ", "").replace(", born", " ·");
@@ -25,27 +27,31 @@ export function GroupScreen() {
   if (!plan)
     return (
       <div className="progress" role="status" aria-live="polite">
+        <div className="progress-art">
+          <Turntable />
+        </div>
         <h1>Planning the group session</h1>
-        <p>
-          <Loader2 className="spin" aria-hidden="true" size={22} style={{ verticalAlign: "-5px" }} /> Finding songs for each resident…
-        </p>
+        <p>Finding songs for each resident…</p>
       </div>
     );
 
   const label = Object.fromEntries(plan.members.map((member) => [member.id, shortLabel(member.label)]));
   return (
     <div className="stack">
-      <div className="box-header">
+      <div className="page-hero">
         <div>
           <h1>Group session setlist</h1>
           <p className="lede">
             For a volunteer musician playing for the six residents of the demo care home. Encore makes sure every resident gets at least two
             songs from their own youth and culture.
           </p>
+          <button className="btn btn-quiet no-print" onClick={() => window.print()}>
+            <Printer aria-hidden="true" size={20} /> Print setlist
+          </button>
         </div>
-        <button className="btn btn-quiet no-print" onClick={() => window.print()}>
-          <Printer aria-hidden="true" size={20} /> Print setlist
-        </button>
+        <div className="page-hero-art no-print">
+          <Stage />
+        </div>
       </div>
 
       {plan.unmet.length > 0 ? (
@@ -67,8 +73,9 @@ export function GroupScreen() {
       <ol className="setlist">
         {plan.setlist.map((entry, index) => (
           <li key={entry.entityId}>
-            <span className="setlist-number" aria-hidden="true">
-              {index + 1}
+            <span className="setlist-sleeve" aria-hidden="true">
+              <Keepsake kind="music" seed={entry.entityId} year={entry.year ?? null} />
+              <span className="setlist-number">{index + 1}</span>
             </span>
             <div>
               <p className="setlist-song">{entry.song ? `“${entry.song}”` : entry.name}</p>

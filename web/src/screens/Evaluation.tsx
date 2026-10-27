@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, ApiError, type Evaluation, type EvaluationSystem } from "../api";
 import { HorizontalBars, Histogram } from "../components/BarChart";
+import { Island } from "../art/scenes";
 import { Notice } from "../components/Notice";
 
 const pct = (value: number | null) => (value == null ? "not measurable" : `${Math.round(value * 100)}%`);
@@ -70,13 +71,18 @@ export function EvaluationScreen() {
 
   return (
     <div className="stack">
-      <div>
-        <h1>How we tested Encore</h1>
-        <p className="lede">
-          On real people's lifetime favorites, not on our own guesses. Every guest on BBC Radio's <em>Desert Island Discs</em> picks the
-          records they'd keep for life. We gave each system the same three of a guest's artists, plus their birth year and birthplace, and hid
-          the rest. Then we checked who found the hidden ones.
-        </p>
+      <div className="page-hero">
+        <div>
+          <h1>How we tested Encore</h1>
+          <p className="lede">
+            On real people's lifetime favorites, not on our own guesses. Every guest on BBC Radio's <em>Desert Island Discs</em> picks the
+            records they'd keep for life. We gave each system the same three of a guest's artists, plus their birth year and birthplace, and
+            hid the rest. Then we checked who found the hidden ones.
+          </p>
+        </div>
+        <div className="page-hero-art">
+          <Island />
+        </div>
       </div>
 
       <section className="form-section" aria-labelledby="eval-hits">

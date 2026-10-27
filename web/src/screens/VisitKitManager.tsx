@@ -1,6 +1,7 @@
 import { Check, Copy, Link2, Loader2, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { api, ApiError, type Language, type VisitKitContent } from "../api";
+import { Envelope } from "../art/scenes";
 import { Notice } from "../components/Notice";
 import { ResidentHeader } from "../components/ResidentHeader";
 import { useResident } from "../useResident";
@@ -69,6 +70,9 @@ export function VisitKitManager({ residentId }: { residentId: string }) {
       </p>
 
       <section className="form-section" aria-labelledby="new-kit">
+        <div className="section-art">
+          <Envelope />
+        </div>
         <h2 id="new-kit">Make a Visit Kit</h2>
         <fieldset className="favorite-group">
           <legend className="field">
