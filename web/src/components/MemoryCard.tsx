@@ -1,6 +1,7 @@
 import { AlertTriangle, BookOpen, ChevronDown, Database, ExternalLink, Frown, Meh, Smile, Sparkles } from "lucide-react";
 import { useState } from "react";
 import type { MemoryItem, ReactionValue } from "../api";
+import { Keepsake } from "../art/keepsake";
 import { appleMusicSearch, youTubeSearch } from "../listen";
 
 const pct = (share: number) => `${Math.round(share * 100)}%`;
@@ -62,6 +63,9 @@ export function MemoryCard({ item, onReact }: { item: MemoryItem; onReact?: (val
 
   return (
     <li className="memory-card" data-band={interpretation.band} data-pinned={item.reaction ? "true" : undefined}>
+      <div className="memory-card-art" data-kind={item.kind}>
+        <Keepsake kind={item.kind} seed={item.entityId} year={interpretation.year} />
+      </div>
       <div className="memory-card-title">
         {item.reaction && (
           <span className="pinned-badge">

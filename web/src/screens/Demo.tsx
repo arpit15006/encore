@@ -1,6 +1,8 @@
-import { Film, Loader2, Music, Music4, Star, Tv } from "lucide-react";
+import { Film, Loader2, Music, Star, Tv } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, ApiError, type DemoResident, type FavoriteKind } from "../api";
+import { Stage } from "../art/scenes";
+import { PlaceStamp } from "../art/stamps";
 import { Notice } from "../components/Notice";
 import { navigate } from "../router";
 
@@ -46,13 +48,18 @@ export function Demo() {
       {!residents && !error && <p role="status">Loading residents…</p>}
       {residents && (
         <ul className="cards cards-two">
-          {residents.map((resident) => {
+          {residents.map((resident, index) => {
             const place = resident.grewUp.split(",")[0];
             return (
               <li key={resident.id} className="door resident">
-                <div>
-                  <h2 className="resident-title">Grew up in {place}</h2>
-                  <p className="resident-meta">Born {resident.birthYear}</p>
+                <div className="resident-top">
+                  <div className="resident-stamp">
+                    <PlaceStamp place={resident.grewUp} tilt={index % 2 ? 3 : -3} />
+                  </div>
+                  <div>
+                    <h2 className="resident-title">Grew up in {place}</h2>
+                    <p className="resident-meta">Born {resident.birthYear}</p>
+                  </div>
                 </div>
                 <ul className="resident-favorites" aria-label="Favorites">
                   {resident.favorites.map((favorite) => {
@@ -76,10 +83,10 @@ export function Demo() {
         </ul>
       )}
       <section className="form-section" style={{ marginTop: "var(--space-6)" }} aria-labelledby="group-door">
-        <h2 id="group-door">
-          <Music4 aria-hidden="true" size={26} style={{ verticalAlign: "-4px", marginRight: 8 }} />
-          Planning a sing-along for all six?
-        </h2>
+        <div className="section-art">
+          <Stage />
+        </div>
+        <h2 id="group-door">Planning a sing-along for all six?</h2>
         <p>Encore can plan one setlist for a visiting musician so every resident gets songs that are theirs.</p>
         <button className="btn btn-quiet" onClick={() => navigate("/group")}>
           See the group setlist

@@ -1,6 +1,7 @@
 import { CircleCheck, Film, Loader2, Music, RotateCcw, Tv } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, type MemoryBox as Box, type MemoryItem, type MemorySection, type ReactionValue, type SectionKind } from "../api";
+import { EmptyBox, Turntable } from "../art/scenes";
 import { AskEncore } from "../components/AskEncore";
 import { DecisionTrace } from "../components/DecisionTrace";
 import { MemoryCard } from "../components/MemoryCard";
@@ -25,9 +26,12 @@ function SectionStatus({ section }: { section: MemorySection }) {
   switch (section.status) {
     case "empty":
       return (
-        <Notice tone="info">
+        <div className="empty-state">
+          <div className="empty-art-wrap">
+            <EmptyBox />
+          </div>
           <p>Qloo didn't find {noun} from their youth for these favorites. Adding another favorite often helps.</p>
-        </Notice>
+        </div>
       );
     case "needs_input":
       return (
@@ -93,6 +97,9 @@ const STEPS = ["Working out the years of their youth", "Asking Qloo what people 
 function Progress({ step }: { step: number }) {
   return (
     <div className="progress" role="status" aria-live="polite">
+      <div className="progress-art">
+        <Turntable />
+      </div>
       <h1>Building their Memory Box</h1>
       <ol>
         {STEPS.map((label, index) => (

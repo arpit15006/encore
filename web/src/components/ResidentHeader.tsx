@@ -1,4 +1,5 @@
 import type { ResidentView } from "../api";
+import { PlaceStamp } from "../art/stamps";
 import { ResidentNav } from "./ResidentNav";
 
 /** Who this page is about, without a name: birth year, places and the favorites everything is built from. */
@@ -6,15 +7,22 @@ export function ResidentHeader({ view, title, headingRef }: { view: ResidentView
   const { resident, favorites } = view;
   return (
     <header className="resident-header">
-      <h1 ref={headingRef} tabIndex={-1}>
-        {title}
-      </h1>
-      <p className="lede" style={{ marginBottom: "var(--space-2)" }}>
-        Born {resident.birthYear}
-        {resident.grewUp ? `, grew up in ${resident.grewUp}` : ""}. Their youth: {resident.birthYear + 10}–{resident.birthYear + 30}.
-        {resident.demoId ? " (A fictional demo resident.)" : ""}
-      </p>
-      <p className="favorites-line">Built from what they loved: {favorites.map((favorite) => favorite.name).join(", ")}.</p>
+      <div className="page-hero">
+        <div>
+          <h1 ref={headingRef} tabIndex={-1}>
+            {title}
+          </h1>
+          <p className="lede" style={{ marginBottom: "var(--space-2)" }}>
+            Born {resident.birthYear}
+            {resident.grewUp ? `, grew up in ${resident.grewUp}` : ""}. Their youth: {resident.birthYear + 10}–{resident.birthYear + 30}.
+            {resident.demoId ? " (A fictional demo resident.)" : ""}
+          </p>
+          <p className="favorites-line">Built from what they loved: {favorites.map((favorite) => favorite.name).join(", ")}.</p>
+        </div>
+        <div className="page-hero-stamp">
+          <PlaceStamp place={resident.grewUp} tilt={4} />
+        </div>
+      </div>
       <ResidentNav residentId={resident.id} />
     </header>
   );

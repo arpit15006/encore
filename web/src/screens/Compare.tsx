@@ -1,12 +1,11 @@
-import { Bot, Check, Database, Loader2, Sparkles, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { api, ApiError, type ComparisonColumn, type LoggedRequest } from "../api";
+import { SystemBadge, Turntable } from "../art/scenes";
 import { Notice } from "../components/Notice";
 import { ResidentHeader } from "../components/ResidentHeader";
 import { WhatQlooSees } from "../components/WhatQlooSees";
 import { useResident } from "../useResident";
-
-const ICONS = { plain_ai: Bot, naive_qloo: Database, encore: Sparkles };
 
 /** What each column can and can't tell you, stated honestly. */
 const VERDICT: Record<ComparisonColumn["system"], string> = {
@@ -16,15 +15,16 @@ const VERDICT: Record<ComparisonColumn["system"], string> = {
 };
 
 function Column({ column }: { column: ComparisonColumn }) {
-  const Icon = ICONS[column.system];
   const empty = column.items.length === 0;
   return (
     <section className="compare-col" data-system={column.system} aria-labelledby={`col-${column.system}`}>
       <div className="compare-head">
-        <h2 id={`col-${column.system}`}>
-          <Icon aria-hidden="true" size={24} style={{ verticalAlign: "-4px", marginRight: 8 }} />
-          {column.title}
-        </h2>
+        <div className="compare-title">
+          <div className="compare-badge">
+            <SystemBadge system={column.system} />
+          </div>
+          <h2 id={`col-${column.system}`}>{column.title}</h2>
+        </div>
         <p className="hint">{column.how}</p>
         <p className="compare-score">
           {column.inYouthCount != null ? (
@@ -89,10 +89,11 @@ export function CompareScreen({ residentId }: { residentId: string }) {
   if (!view || !data)
     return (
       <div className="progress" role="status" aria-live="polite">
+        <div className="progress-art">
+          <Turntable />
+        </div>
         <h1>Comparing three ways to choose</h1>
-        <p>
-          <Loader2 className="spin" aria-hidden="true" size={22} style={{ verticalAlign: "-5px" }} /> Asking a plain AI model, Qloo used naively, and Encore…
-        </p>
+        <p>Asking a plain AI model, Qloo used naively, and Encore…</p>
       </div>
     );
 
