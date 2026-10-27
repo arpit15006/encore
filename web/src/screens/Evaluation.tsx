@@ -15,7 +15,8 @@ const SHORT: Record<EvaluationSystem["id"], string> = {
 
 function SystemsTable({ systems, caption }: { systems: EvaluationSystem[]; caption: string }) {
   return (
-    <div className="table-wrap">
+    // Scrolls sideways on phones, so it must be reachable by keyboard.
+    <div className="table-wrap" tabIndex={0} role="region" aria-label={caption}>
       <table className="data-table">
         <caption>{caption}</caption>
         <thead>

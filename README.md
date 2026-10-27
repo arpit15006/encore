@@ -236,6 +236,13 @@ docker run -p 8080:8080 --env-file .env -v encore-data:/app/var encore
 
 On boot the server warms every demo resident's Qloo and model answers in the background (`PREWARM=false` to skip); with a persistent volume at `/app/var` that costs quota once.
 
+**Deploy to Railway** (or any host that runs a long-lived container; serverless isn't supported, because `qloo mcp` is a local stdio process):
+
+1. New project → Deploy from GitHub repo. Railway reads `railway.json`: Dockerfile build, one replica, no sleeping, health check on `/api/health`.
+2. Variables: `QLOO_API_KEY` and `GROQ_API_KEY`. Railway sets `PORT` itself.
+3. Add a volume mounted at `/app/var` so the Qloo cache and Visit Kits survive redeploys. The entrypoint gives the volume to the unprivileged `node` user, sets the hackathon base URL, then drops root.
+4. Settings → Networking → Generate domain. Check `/api/health/qloo/live` once; prewarming then fills the cache for the demo residents.
+
 | Health check | Checks | Uses Qloo quota |
 |---|---|---|
 | `/api/health` | The server is running | No |

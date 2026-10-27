@@ -471,6 +471,9 @@
 }
 .youth-decades li {
   text-align: center;
+}
+/* Only the picture fades; the decade label keeps full text contrast. */
+.youth-decades li .art {
   opacity: 0.35;
   filter: grayscale(0.85);
   transform: translateY(8px) scale(0.92);
@@ -479,18 +482,24 @@
     filter 400ms ease,
     transform 500ms cubic-bezier(0.3, 1.5, 0.5, 1);
 }
-.youth-decades li[data-lit] {
+.youth-decades li[data-lit] .art {
   opacity: 1;
   filter: none;
   transform: translateY(-6px) scale(1.04);
 }
 .youth-decade {
-  display: block;
+  display: inline-block;
   margin-top: var(--space-1);
+  padding: 0 var(--space-2);
+  border-radius: 999px;
   font-weight: 700;
   font-size: 0.95rem;
+  color: var(--ink-muted);
 }
-.youth-decades li[data-lit] .youth-decade { color: var(--primary); }
+.youth-decades li[data-lit] .youth-decade {
+  background: var(--primary);
+  color: var(--on-primary);
+}
 
 /* Tiles: a picture and a line, instead of paragraphs. */
 .tiles {
