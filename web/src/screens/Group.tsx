@@ -1,7 +1,8 @@
 import { Printer, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { api, ApiError, type GroupPlan } from "../api";
 import { Keepsake } from "../art/keepsake";
+import { PlaceStamp } from "../art/stamps";
 import { Stage, Turntable } from "../art/scenes";
 import { Notice } from "../components/Notice";
 
@@ -11,6 +12,7 @@ const shortLabel = (label: string) => label.replace("Grew up in ", "").replace("
 export function GroupScreen() {
   const [plan, setPlan] = useState<GroupPlan>();
   const [error, setError] = useState<string>();
+  const [focus, setFocus] = useState<string>();
   useEffect(() => {
     api
       .groupSession()
@@ -70,9 +72,39 @@ export function GroupScreen() {
         </Notice>
       )}
 
-      <ol className="setlist">
+      <section className="seating" aria-labelledby="seating-title">
+        <h2 id="seating-title" className="seating-title">
+          Who is each song for?
+        </h2>
+        <p className="hint">Pick a resident to light up their songs.</p>
+        <div className="seats" role="group" aria-label="Residents">
+          {plan.members.map((member, index) => {
+            const count = plan.setlist.filter((entry) => entry.forMembers.includes(member.id)).length;
+            return (
+              <button
+                key={member.id}
+                type="button"
+                className="seat"
+                aria-pressed={focus === member.id}
+                style={{ "--i": index } as CSSProperties}
+                onClick={() => setFocus((current) => (current === member.id ? undefined : member.id))}
+              >
+                <span className="seat-stamp">
+                  <PlaceStamp place={member.label} label={label[member.id]?.split(" ·")[0]} tilt={index % 2 ? 4 : -4} />
+                </span>
+                <span className="seat-label">{label[member.id]}</span>
+                <span className="seat-count">
+                  {count} {count === 1 ? "song" : "songs"}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <ol className="setlist" data-focus={focus ? "" : undefined}>
         {plan.setlist.map((entry, index) => (
-          <li key={entry.entityId}>
+          <li key={entry.entityId} data-for={focus && entry.forMembers.includes(focus) ? "" : undefined} style={{ "--i": index } as CSSProperties}>
             <span className="setlist-sleeve" aria-hidden="true">
               <Keepsake kind="music" seed={entry.entityId} year={entry.year ?? null} />
               <span className="setlist-number">{index + 1}</span>
