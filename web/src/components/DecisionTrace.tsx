@@ -1,4 +1,6 @@
 import { ArrowDownUp, Ban, CalendarRange, ChevronDown, Database, Heart, Route, TriangleAlert } from "lucide-react";
+import type { CSSProperties } from "react";
+import { RouteArt } from "../art/icons";
 import type { TraceStep } from "../api";
 
 const ICONS: Record<TraceStep["kind"], typeof Route> = {
@@ -16,7 +18,9 @@ export function DecisionTrace({ steps, defaultOpen = false }: { steps: TraceStep
   return (
     <details className="qloo-sees" id="trace" open={defaultOpen}>
       <summary>
-        <Route aria-hidden="true" size={22} />
+        <span className="summary-art">
+          <RouteArt />
+        </span>
         How Encore decided: {steps.length} steps
         <ChevronDown className="chevron" aria-hidden="true" size={22} />
       </summary>
@@ -25,7 +29,7 @@ export function DecisionTrace({ steps, defaultOpen = false }: { steps: TraceStep
           {steps.map((step, index) => {
             const Icon = ICONS[step.kind];
             return (
-              <li key={index} data-kind={step.kind}>
+              <li key={index} data-kind={step.kind} style={{ "--i": index } as CSSProperties}>
                 <Icon aria-hidden="true" size={20} />
                 <span>{step.text}</span>
               </li>

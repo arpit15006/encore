@@ -1,6 +1,7 @@
-import { AlertTriangle, BookOpen, ChevronDown, Database, ExternalLink, Frown, Meh, Smile, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, BookOpen, ChevronDown, Database, ExternalLink, Sparkles } from "lucide-react";
+import { useState, type CSSProperties } from "react";
 import type { MemoryItem, ReactionValue } from "../api";
+import { ReactionFace } from "../art/icons";
 import { Keepsake } from "../art/keepsake";
 import { appleMusicSearch, youTubeSearch } from "../listen";
 
@@ -19,20 +20,32 @@ function evidenceSentence(item: MemoryItem): string {
   return `People who share ${all} of their favorites often enjoy this.`;
 }
 
-const REACTIONS: Array<{ value: ReactionValue; label: string; icon: typeof Smile }> = [
-  { value: "lit_up", label: "Lit up", icon: Sparkles },
-  { value: "calm", label: "Calm", icon: Smile },
-  { value: "none", label: "No response", icon: Meh },
-  { value: "distressed", label: "Distressed", icon: Frown },
+const REACTIONS: Array<{ value: ReactionValue; label: string }> = [
+  { value: "lit_up", label: "Lit up" },
+  { value: "calm", label: "Calm" },
+  { value: "none", label: "No response" },
+  { value: "distressed", label: "Distressed" },
 ];
+
+/** Sparkles flying out of a button: a small celebration when something lands. */
+function Burst() {
+  return (
+    <span className="burst" aria-hidden="true">
+      {Array.from({ length: 10 }, (_, i) => (
+        <span key={i} style={{ "--angle": `${i * 36}deg`, "--hue": i % 3 } as CSSProperties} />
+      ))}
+    </span>
+  );
+}
 
 /** One-tap reactions for staff mid-session. Big targets; the pressed state is announced. */
 function ReactionButtons({ name, onReact }: { name: string; onReact: (value: ReactionValue) => Promise<void> }) {
   const [saving, setSaving] = useState<ReactionValue>();
   const [saved, setSaved] = useState<ReactionValue>();
+  const [celebrate, setCelebrate] = useState(0);
   return (
     <div className="reactions" role="group" aria-label={`How did they respond to ${name}?`}>
-      {REACTIONS.map(({ value, label, icon: Icon }) => (
+      {REACTIONS.map(({ value, label }) => (
         <button
           key={value}
           className="reaction"
@@ -44,25 +57,30 @@ function ReactionButtons({ name, onReact }: { name: string; onReact: (value: Rea
             try {
               await onReact(value);
               setSaved(value);
+              setCelebrate((count) => count + 1);
             } finally {
               setSaving(undefined);
             }
           }}
         >
-          <Icon aria-hidden="true" size={20} />
+          <span className="reaction-face">
+            <ReactionFace value={value} />
+          </span>
           {label}
+          {saved === value && value === "lit_up" && <Burst key={celebrate} />}
+          {saved === value && value === "calm" && <span key={celebrate} className="ripple" aria-hidden="true" />}
         </button>
       ))}
     </div>
   );
 }
 
-export function MemoryCard({ item, onReact }: { item: MemoryItem; onReact?: (value: ReactionValue) => Promise<void> }) {
+export function MemoryCard({ item, onReact, index = 0 }: { item: MemoryItem; onReact?: (value: ReactionValue) => Promise<void>; index?: number }) {
   const { qloo, interpretation } = item;
   const late = interpretation.band === "too_late";
 
   return (
-    <li className="memory-card" data-band={interpretation.band} data-pinned={item.reaction ? "true" : undefined}>
+    <li className="memory-card" data-band={interpretation.band} data-pinned={item.reaction ? "true" : undefined} style={{ "--i": index % 6 } as CSSProperties}>
       <div className="memory-card-art" data-kind={item.kind}>
         <Keepsake kind={item.kind} seed={item.entityId} year={interpretation.year} />
       </div>

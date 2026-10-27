@@ -1,6 +1,7 @@
-import { CircleCheck, Film, Loader2, Music, RotateCcw, Tv } from "lucide-react";
+import { CircleCheck, Loader2, RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, ApiError, type MemoryBox as Box, type MemoryItem, type MemorySection, type ReactionValue, type SectionKind } from "../api";
+import { CategoryArt } from "../art/icons";
 import { EmptyBox, Turntable } from "../art/scenes";
 import { AskEncore } from "../components/AskEncore";
 import { DecisionTrace } from "../components/DecisionTrace";
@@ -13,10 +14,10 @@ import { Timeline } from "../components/Timeline";
 import { WhatQlooSees } from "../components/WhatQlooSees";
 import { useResident } from "../useResident";
 
-const SECTION_COPY: Record<SectionKind, { title: string; icon: typeof Music; noun: string }> = {
-  music: { title: "Music", icon: Music, noun: "singers or bands" },
-  films: { title: "Films", icon: Film, noun: "films" },
-  tv: { title: "TV", icon: Tv, noun: "TV shows" },
+const SECTION_COPY: Record<SectionKind, { title: string; art: "music" | "film" | "tv"; noun: string }> = {
+  music: { title: "Music", art: "music", noun: "singers or bands" },
+  films: { title: "Films", art: "film", noun: "films" },
+  tv: { title: "TV", art: "tv", noun: "TV shows" },
 };
 
 const REACTION_WORDS: Record<ReactionValue, string> = { lit_up: "lit up", calm: "calm", none: "no response", distressed: "distressed" };
@@ -78,8 +79,8 @@ function Section({ section, onReact }: { section: MemorySection; onReact: (item:
       )}
       {section.items.length > 0 && (
         <ul className="cards">
-          {section.items.slice(0, shown).map((item) => (
-            <MemoryCard key={item.entityId} item={item} onReact={(value) => onReact(item, value)} />
+          {section.items.slice(0, shown).map((item, index) => (
+            <MemoryCard key={item.entityId} item={item} index={index} onReact={(value) => onReact(item, value)} />
           ))}
         </ul>
       )}
@@ -206,12 +207,14 @@ export function MemoryBoxScreen({ residentId, openTrace = false }: { residentId:
         selected={tab}
         onSelect={(id) => setTab(id as SectionKind)}
         tabs={box.sections.map((section) => {
-          const { title, icon: Icon } = SECTION_COPY[section.kind];
+          const { title, art } = SECTION_COPY[section.kind];
           return {
             id: section.kind,
             label: (
               <>
-                <Icon aria-hidden="true" size={20} />
+                <span className="tab-art">
+                  <CategoryArt kind={art} />
+                </span>
                 {title}
                 <span className="tab-count">{section.items.length}</span>
               </>

@@ -1,4 +1,5 @@
-import { ChevronDown, EyeOff, ShieldCheck } from "lucide-react";
+import { ChevronDown, EyeOff } from "lucide-react";
+import { WindowArt } from "../art/icons";
 import type { Favorite, LoggedRequest } from "../api";
 
 const NEVER_SENT = ["Names", "Health or diagnoses", "Reactions", "Care notes", "Addresses", "Care home name"];
@@ -31,7 +32,9 @@ export function WhatQlooSees({ requests, favorites }: { requests: LoggedRequest[
   return (
     <details className="qloo-sees">
       <summary>
-        <ShieldCheck aria-hidden="true" size={22} />
+        <span className="summary-art">
+          <WindowArt />
+        </span>
         What Qloo sees: {requests.length} {requests.length === 1 ? "request" : "requests"}, no personal details
         <ChevronDown className="chevron" aria-hidden="true" size={22} />
       </summary>

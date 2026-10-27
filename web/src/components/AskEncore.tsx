@@ -1,4 +1,5 @@
-import { Loader2, MessageCircleQuestion, Send } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
+import { AskArt } from "../art/icons";
 import { useState, type FormEvent } from "react";
 import { api, ApiError, type AgentAnswer } from "../api";
 import { Notice } from "./Notice";
@@ -40,8 +41,10 @@ export function AskEncore({ residentId }: { residentId: string }) {
 
   return (
     <section className="form-section ask" aria-labelledby="ask-heading">
-      <h2 id="ask-heading">
-        <MessageCircleQuestion aria-hidden="true" size={26} style={{ verticalAlign: "-4px", marginRight: 8 }} />
+      <h2 id="ask-heading" className="title-with-art">
+        <span className="title-art">
+          <AskArt />
+        </span>
         Ask Encore
       </h2>
       <p className="hint">Encore's agent answers from their Memory Box and asks Qloo when it needs more. Every Qloo step is shown.</p>

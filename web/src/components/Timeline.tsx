@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type CSSProperties } from "react";
 import type { MemorySection, SectionKind } from "../api";
 
 const HEIGHT = 156;
@@ -64,7 +64,7 @@ export function Timeline({ birthYear, sections }: { birthYear: number; sections:
             <desc id={descId}>
               {`Born ${birthYear}. Ages 10 to 30 run from ${youthStart} to ${youthEnd}. ${inYouth} of ${items.length} dated picks come from that window or earlier.`}
             </desc>
-            <rect x={x(youthStart)} y={26} width={x(youthEnd) - x(youthStart)} height={104} rx={8} fill="var(--youth-band)" />
+            <rect className="youth-band" x={x(youthStart)} y={26} width={x(youthEnd) - x(youthStart)} height={104} rx={8} fill="var(--youth-band)" />
             <text x={(x(youthStart) + x(youthEnd)) / 2} y={18} textAnchor="middle" fontSize={LABEL_SIZE} fill="var(--ink)" fontWeight={700}>
               Ages 10–30
             </text>
@@ -83,12 +83,15 @@ export function Timeline({ birthYear, sections }: { birthYear: number; sections:
                 {LANES[kind].label}
               </text>
             ))}
-            {items.map((item) => (
+            {items.map((item, index) => (
               <g
                 key={`${item.kind}-${item.entityId}`}
+                className="timeline-marker"
+                style={{ "--i": index } as CSSProperties}
                 fill={item.interpretation.band === "too_late" ? "var(--caution-border)" : "var(--primary)"}
                 opacity={0.85}
               >
+                <title>{`${item.name}, ${item.interpretation.year}`}</title>
                 <Marker kind={item.kind} x={x(item.interpretation.year!)} y={LANES[item.kind].y} />
               </g>
             ))}
