@@ -56,6 +56,9 @@ const KitBody = z.object({ language: z.enum(languages).default("en") });
 const AskBody = z.object({ question: z.string().trim().min(3).max(300) });
 const Id = z.object({ id: z.string().uuid() });
 
+/** Public, slow-changing answers: browsers and proxies may reuse them for five minutes. */
+const PUBLIC_CACHE = "public, max-age=300";
+
 const invalid = (reply: FastifyReply, error: z.ZodError) =>
   reply.code(400).send({ error: "invalid_request", issues: error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`) });
 const notFound = (reply: FastifyReply) => reply.code(404).send({ error: "not_found" });
@@ -117,9 +120,10 @@ export async function buildApp({ qloo, store, rateLimitPerMinute, service, model
     return story ? story : reply.code(502).send({ error: "model_failed" });
   });
 
-  app.get("/api/demo-residents", async () =>
-    DEMO_RESIDENTS.map(({ id, label, birthYear, grewUp, favorites }) => ({ id, label, birthYear, grewUp, favorites })),
-  );
+  app.get("/api/demo-residents", async (_request, reply) => {
+    reply.header("Cache-Control", PUBLIC_CACHE);
+    return DEMO_RESIDENTS.map(({ id, label, birthYear, grewUp, favorites }) => ({ id, label, birthYear, grewUp, favorites }));
+  });
 
   if (service) {
     app.post("/api/residents", async (request, reply) => {
@@ -209,16 +213,35 @@ export async function buildApp({ qloo, store, rateLimitPerMinute, service, model
       return (await service.ask(params.data.id, body.data.question)) ?? notFound(reply);
     });
 
-    app.get("/api/group-session", async () => service.groupSession());
+    // The same for every visitor and slow to compute on a small CPU, so it is built once and reused.
+    let groupPlan: { at: number; plan: Promise<unknown> } | undefined;
+    app.get("/api/group-session", async (_request, reply) => {
+      if (!groupPlan || Date.now() - groupPlan.at > 10 * 60_000) {
+        const plan = service.groupSession();
+        groupPlan = { at: Date.now(), plan };
+        plan.catch(() => (groupPlan = undefined));
+      }
+      reply.header("Cache-Control", PUBLIC_CACHE);
+      return groupPlan.plan;
+    });
   }
 
+  const evaluation = evaluationFile && existsSync(evaluationFile) ? JSON.parse(readFileSync(evaluationFile, "utf8")) : undefined;
   app.get("/api/evaluation", async (_request, reply) => {
-    if (!evaluationFile || !existsSync(evaluationFile)) return reply.code(404).send({ error: "not_available" });
-    return JSON.parse(readFileSync(evaluationFile, "utf8"));
+    if (!evaluation) return reply.code(404).send({ error: "not_available" });
+    reply.header("Cache-Control", PUBLIC_CACHE);
+    return evaluation;
   });
 
   if (webDist && existsSync(webDist)) {
-    await app.register(fastifyStatic, { root: webDist });
+    await app.register(fastifyStatic, {
+      root: webDist,
+      // The build writes .br and .gz copies, so nothing is compressed per request on a small CPU.
+      preCompressed: true,
+      // Hashed assets never change; the page itself is always revalidated so a deploy shows at once.
+      setHeaders: (reply, filePath) =>
+        reply.header("Cache-Control", /[\\/]assets[\\/]/.test(filePath) ? "public, max-age=31536000, immutable" : "no-cache"),
+    });
     // Client-side routes load the app. Missing files (anything with an extension) and unknown API
     // paths stay 404, so a broken asset never comes back as HTML.
     app.setNotFoundHandler((request, reply) => {

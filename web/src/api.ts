@@ -181,27 +181,56 @@ async function request<T>(method: "GET" | "POST" | "DELETE", path: string, body?
   return (response.status === 204 ? undefined : await response.json()) as T;
 }
 
+/**
+ * A small in-memory cache for reads. Pages that were already visited, or prefetched in the background,
+ * open instantly; identical requests in flight are shared. Any change to a resident clears its entries.
+ */
+const FRESH_MS = 2 * 60_000;
+const reads = new Map<string, { at: number; value: Promise<unknown> }>();
+function cachedGet<T>(path: string): Promise<T> {
+  const hit = reads.get(path);
+  if (hit && Date.now() - hit.at < FRESH_MS) return hit.value as Promise<T>;
+  const value = request<T>("GET", path);
+  reads.set(path, { at: Date.now(), value });
+  value.catch(() => reads.delete(path));
+  return value;
+}
+function forgetResident<T>(id: string, change: Promise<T>): Promise<T> {
+  return change.finally(() => {
+    for (const key of reads.keys()) if (key.startsWith(`/api/residents/${id}`)) reads.delete(key);
+  });
+}
+const quietly = (promise: Promise<unknown>) => void promise.catch(() => undefined);
+
 export const api = {
   resolveFavorites: (items: Array<{ text: string; kind: FavoriteKind }>) =>
     request<{ results: Resolution[]; whatQlooSaw: LoggedRequest[] }>("POST", "/api/intake/resolve", { items }),
   interpret: (text: string) => request<InterpretedStory>("POST", "/api/intake/interpret", { text }),
-  demoResidents: () => request<DemoResident[]>("GET", "/api/demo-residents"),
+  demoResidents: () => cachedGet<DemoResident[]>("/api/demo-residents"),
   createResident: (input: { birthYear: number; grewUp?: string; livesIn?: string; favorites: Favorite[] }) =>
     request<{ id: string }>("POST", "/api/residents", input),
   copyDemo: (demoId: string) => request<{ id: string }>("POST", `/api/residents/from-demo/${encodeURIComponent(demoId)}`),
-  resident: (id: string) => request<ResidentView>("GET", `/api/residents/${id}`),
-  memoryBox: (id: string) => request<MemoryBox>("GET", `/api/residents/${id}/memory-box`),
+  resident: (id: string) => cachedGet<ResidentView>(`/api/residents/${id}`),
+  memoryBox: (id: string) => cachedGet<MemoryBox>(`/api/residents/${id}/memory-box`),
   react: (id: string, value: ReactionValue, item: MemoryItem) =>
-    request<{ similarThemes: Array<{ id: string; name: string }> }>("POST", `/api/residents/${id}/reactions`, { value, item }),
+    forgetResident(id, request<{ similarThemes: Array<{ id: string; name: string }> }>("POST", `/api/residents/${id}/reactions`, { value, item })),
   exclude: (id: string, exclusion: { target: string; kind: "entity" | "tag"; label: string }) =>
-    request<void>("POST", `/api/residents/${id}/exclusions`, exclusion),
-  unexclude: (id: string, target: string) => request<void>("DELETE", `/api/residents/${id}/exclusions/${encodeURIComponent(target)}`),
-  compare: (id: string) => request<{ columns: ComparisonColumn[]; whatQlooSaw: LoggedRequest[] }>("GET", `/api/residents/${id}/compare`),
+    forgetResident(id, request<void>("POST", `/api/residents/${id}/exclusions`, exclusion)),
+  unexclude: (id: string, target: string) => forgetResident(id, request<void>("DELETE", `/api/residents/${id}/exclusions/${encodeURIComponent(target)}`)),
+  compare: (id: string) => cachedGet<{ columns: ComparisonColumn[]; whatQlooSaw: LoggedRequest[] }>(`/api/residents/${id}/compare`),
   createVisitKit: (id: string, language: Language) =>
-    request<{ token: string; expiresAt: string; content: VisitKitContent; whatQlooSaw: LoggedRequest[] }>("POST", `/api/residents/${id}/visit-kits`, { language }),
-  revokeVisitKit: (id: string, hint: string) => request<void>("POST", `/api/residents/${id}/visit-kits/${hint}/revoke`),
-  visitKit: (token: string) => request<{ content: VisitKitContent; expiresAt: string }>("GET", `/api/visit-kits/${token}`),
+    forgetResident(id, request<{ token: string; expiresAt: string; content: VisitKitContent; whatQlooSaw: LoggedRequest[] }>("POST", `/api/residents/${id}/visit-kits`, { language })),
+  revokeVisitKit: (id: string, hint: string) => forgetResident(id, request<void>("POST", `/api/residents/${id}/visit-kits/${hint}/revoke`)),
+  visitKit: (token: string) => cachedGet<{ content: VisitKitContent; expiresAt: string }>(`/api/visit-kits/${token}`),
   ask: (id: string, question: string) => request<AgentAnswer>("POST", `/api/residents/${id}/ask`, { question }),
-  groupSession: () => request<GroupPlan>("GET", "/api/group-session"),
-  evaluation: () => request<Evaluation>("GET", "/api/evaluation"),
+  groupSession: () => cachedGet<GroupPlan>("/api/group-session"),
+  evaluation: () => cachedGet<Evaluation>("/api/evaluation"),
+  /** Loads a resident's other pages in the background, so moving between them is instant. */
+  prefetchResident: (id: string) => {
+    for (const path of ["", "/memory-box", "/compare"]) quietly(cachedGet(`/api/residents/${id}${path}`));
+  },
+  /** Loads the public pages a visitor is likely to open next. */
+  prefetchPublic: () => {
+    for (const path of ["/api/demo-residents", "/api/group-session", "/api/evaluation"]) quietly(cachedGet(path));
+  },
 };

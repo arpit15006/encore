@@ -62,6 +62,7 @@ export async function startTour(): Promise<void> {
     id = (await api.copyDemo(TOUR_DEMO)).id;
     save(id);
   }
+  api.prefetchResident(id);
   navigate(TOUR[0]!.path(id));
 }
 

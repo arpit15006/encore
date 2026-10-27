@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { api } from "./api";
 import { Layout } from "./components/Layout";
 import { TourBar } from "./components/TourBar";
 import { match, useLocation } from "./router";
@@ -38,6 +39,11 @@ function Screen({ path, tourStep }: { path: string; tourStep: number }) {
 
 export function App() {
   const { path, search } = useLocation();
+  // Once the first page has settled, fetch the public pages a visitor usually opens next.
+  useEffect(() => {
+    const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1500));
+    idle(() => api.prefetchPublic());
+  }, []);
   const tourStep = Number(search.get("tour") ?? 0);
 
   useEffect(() => {

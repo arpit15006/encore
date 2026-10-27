@@ -6,6 +6,8 @@ export function useResident(id: string) {
   const [view, setView] = useState<ResidentView>();
   const [error, setError] = useState<string>();
   const [version, setVersion] = useState(0);
+  // Their other pages load in the background, so switching tabs never waits.
+  useEffect(() => api.prefetchResident(id), [id]);
   useEffect(() => {
     let cancelled = false;
     api

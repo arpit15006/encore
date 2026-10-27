@@ -193,7 +193,8 @@ export class EncoreService {
       const scope = scopeFor("prewarm");
       const box = await buildMemoryBox(this.qloo, { birthYear: demo.birthYear, favorites: demo.favorites }, scope);
       await compareSystems(this.qloo, this.model, { birthYear: demo.birthYear, grewUp: demo.grewUp, livesIn: demo.livesIn, favorites: demo.favorites }, box, scope);
-      await conversationStarters(this.qloo, this.model, visitPicks(box), "en", scope);
+      // Every language a Visit Kit offers (the tour shows Hindi), so kits open without waiting on the model.
+      for (const language of ["en", "hi", "es"] as const) await conversationStarters(this.qloo, this.model, visitPicks(box), language, scope);
       log(`prewarmed ${demo.id}`);
     }
     await this.groupSession();
