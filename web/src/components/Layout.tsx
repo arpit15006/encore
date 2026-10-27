@@ -1,5 +1,5 @@
-import { Disc3 } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
+import { BrandMark, GrooveDivider } from "../art/scenes";
 import { navigate, usePath } from "../router";
 
 function NavLink({ to, children }: { to: string; children: ReactNode }) {
@@ -31,7 +31,7 @@ export function Layout({ children }: { children: ReactNode }) {
               navigate("/");
             }}
           >
-            <Disc3 aria-hidden="true" size={30} />
+            <BrandMark />
             Encore
           </a>
           <nav className="site-nav" aria-label="Main">
@@ -47,6 +47,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </main>
       <footer className="site-footer">
         <div className="container">
+          <GrooveDivider />
           <p>
             Encore supports engagement and person-centered activities. It is not a medical tool and doesn't replace music therapists or
             care professionals. Taste data from Qloo describes groups of people, never one person.

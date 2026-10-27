@@ -379,6 +379,7 @@ main {
   padding: 0;
   margin: 0;
   flex: 1;
+  align-content: start;
   display: grid;
   gap: var(--space-2);
 }
@@ -1523,6 +1524,235 @@ main {
 .tour-actions {
   display: flex;
   gap: var(--space-2);
+}
+
+/* ---------- Illustrations in the layout ---------- */
+.brand .brand-mark {
+  width: 34px;
+  height: 34px;
+}
+.eyebrow {
+  margin: 0 0 var(--space-3);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.hero {
+  display: grid;
+  gap: var(--space-5);
+  align-items: center;
+}
+.hero-visual {
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+}
+@media (min-width: 900px) {
+  .hero {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--space-6);
+  }
+  .hero-visual {
+    max-width: none;
+  }
+}
+/* Door pictures bleed to the card's edges, like a photo at the top of a page. */
+.door-visual {
+  overflow: hidden;
+  margin: calc(-1 * var(--space-6)) calc(-1 * var(--space-6)) var(--space-2);
+  padding: var(--space-4) var(--space-6) 0;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.door-visual .art {
+  max-width: 300px;
+  margin: 0 auto;
+}
+@media (max-width: 480px) {
+  .door {
+    padding: var(--space-5);
+  }
+  .door-visual {
+    margin: calc(-1 * var(--space-5)) calc(-1 * var(--space-5)) var(--space-2);
+    padding: var(--space-3) var(--space-5) 0;
+  }
+}
+
+/* A picture beside a page title; on narrow screens it sits above the words, smaller. */
+.page-hero {
+  display: grid;
+  gap: var(--space-4);
+  align-items: center;
+}
+.page-hero-art,
+.page-hero-stamp {
+  order: -1;
+  width: min(220px, 60%);
+}
+.page-hero-stamp {
+  width: 96px;
+}
+@media (min-width: 720px) {
+  .page-hero {
+    grid-template-columns: 1fr auto;
+    gap: var(--space-6);
+  }
+  .page-hero-art,
+  .page-hero-stamp {
+    order: 0;
+    width: clamp(200px, 26vw, 300px);
+  }
+  .page-hero-stamp {
+    width: 120px;
+  }
+}
+/* Pictures inside panels float to the side so the text keeps its width. */
+.section-art,
+.proof-art {
+  float: right;
+  width: clamp(130px, 24vw, 230px);
+  margin: 0 0 var(--space-3) var(--space-4);
+}
+@media (max-width: 560px) {
+  .section-art,
+  .proof-art {
+    float: none;
+    width: 180px;
+    margin: 0 auto var(--space-3);
+  }
+}
+/* Grids under a floated picture start below it, so their columns keep their width. */
+.care-grid,
+.proof-stats {
+  clear: both;
+}
+.proof::after,
+.form-section::after {
+  content: "";
+  display: block;
+  clear: both;
+}
+
+/* Demo residents: a stamp for where they grew up. */
+.resident-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.resident-stamp {
+  flex: none;
+  width: 96px;
+  filter: drop-shadow(0 2px 4px rgb(42 31 23 / 0.15));
+}
+.page-hero-stamp .art,
+.resident-stamp .art {
+  overflow: visible;
+}
+.page-hero-stamp {
+  filter: drop-shadow(0 2px 4px rgb(42 31 23 / 0.15));
+}
+
+/* Memory cards: their keepsake on a shelf at the top. */
+.memory-card-art {
+  display: grid;
+  place-items: center;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.memory-card-art .art {
+  width: 156px;
+}
+.memory-card[data-band="too_late"] .memory-card-art .art {
+  opacity: 0.75;
+}
+
+/* Waiting: the record player instead of a bare spinner. */
+.progress-art {
+  width: min(240px, 70%);
+  margin: 0 auto var(--space-4);
+}
+.empty-state {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background: var(--surface);
+  border: 1px dashed var(--control-border);
+  border-radius: var(--radius);
+}
+.empty-state p {
+  margin: 0;
+}
+.empty-art-wrap {
+  width: min(200px, 60%);
+  margin: 0 auto;
+}
+
+/* Comparison badges. */
+.compare-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.compare-title h2 {
+  margin: 0;
+}
+.compare-badge {
+  flex: none;
+  width: 52px;
+}
+
+/* Visit Kit and setlist sleeves. */
+.kit-songs li {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  column-gap: var(--space-4);
+  align-items: center;
+}
+.kit-songs li > :not(.kit-sleeve) {
+  grid-column: 2;
+}
+.kit-sleeve {
+  grid-row: span 3;
+}
+.setlist-sleeve {
+  position: relative;
+  display: block;
+  width: 84px;
+}
+.setlist-sleeve .setlist-number {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  width: 32px;
+  height: 32px;
+  font-size: 0.95rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 2px solid var(--surface);
+}
+@media (max-width: 480px) {
+  .kit-songs li {
+    grid-template-columns: 64px 1fr;
+  }
+  .setlist-sleeve {
+    width: 64px;
+  }
+}
+
+.site-footer {
+  border-top: none;
+}
+.groove-divider {
+  height: 20px;
+  margin-bottom: var(--space-4);
+  opacity: 0.6;
 }
 
 /* Print: the Visit Kit and the setlist are meant to be printed. */

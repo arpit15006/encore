@@ -1,6 +1,7 @@
-import { BarChart3, Building2, CalendarClock, Heart, Loader2, Map, Music4, ShieldCheck, Users } from "lucide-react";
+import { BarChart3, CalendarClock, Loader2, Music4, ShieldCheck, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, type Evaluation } from "../api";
+import { CareHome, HeroScene, Island, KeepsakeTrio, Stage } from "../art/scenes";
 import { navigate } from "../router";
 import { startTour } from "../tour";
 
@@ -25,6 +26,9 @@ function Proof() {
   if (!encore || !plain || !naive || !encoreAbroad || !plainAbroad) return null;
   return (
     <section className="proof" aria-labelledby="proof-heading">
+      <div className="proof-art">
+        <Island />
+      </div>
       <h2 id="proof-heading">Tested on real people's lifetime favorites</h2>
       <p className="hint">
         {data.sample.evaluated} guests of BBC Radio's <em>Desert Island Discs</em>. Each system got three of a guest's artists and had to find
@@ -69,10 +73,10 @@ function Proof() {
 function ForCareHomes() {
   return (
     <section className="form-section care-homes" aria-labelledby="care-homes-heading">
-      <h2 id="care-homes-heading">
-        <Building2 aria-hidden="true" size={26} style={{ verticalAlign: "-4px", marginRight: 8 }} />
-        For care homes
-      </h2>
+      <div className="section-art">
+        <Stage />
+      </div>
+      <h2 id="care-homes-heading">For care homes</h2>
       <div className="care-grid">
         <div>
           <h3>Who it's for</h3>
@@ -105,16 +109,24 @@ export function Landing() {
   const [starting, setStarting] = useState(false);
   return (
     <>
-      <h1>The songs, films and shows that still bring them back.</h1>
-      <p className="lede">
-        Tell Encore a few things your loved one enjoyed when they were young. It finds the music, films and TV from their youth that people
-        with the same tastes love, so visits and activities feel familiar. It learns from how they respond.
-      </p>
+      <div className="hero">
+        <div className="hero-text">
+          <p className="eyebrow">For dementia care teams and families</p>
+          <h1>The songs, films and shows that still bring them back.</h1>
+          <p className="lede">
+            Tell Encore a few things your loved one enjoyed when they were young. It finds the music, films and TV from their youth that
+            people with the same tastes love, so visits and activities feel familiar. It learns from how they respond.
+          </p>
+        </div>
+        <div className="hero-visual">
+          <HeroScene />
+        </div>
+      </div>
 
       <div className="doors">
         <section className="door" aria-labelledby="door-try">
-          <div className="door-icon">
-            <Heart aria-hidden="true" size={28} />
+          <div className="door-visual">
+            <KeepsakeTrio />
           </div>
           <h2 id="door-try">Try it on someone you love</h2>
           <p>Their birth year and a few favorites, in your own words. About two minutes. No names, no sign-up.</p>
@@ -124,8 +136,8 @@ export function Landing() {
         </section>
 
         <section className="door" aria-labelledby="door-tour">
-          <div className="door-icon">
-            <Map aria-hidden="true" size={28} />
+          <div className="door-visual">
+            <CareHome />
           </div>
           <h2 id="door-tour">Take the 90-second tour</h2>
           <p>Follow a fictional resident who grew up in Mumbai: the comparison, her Memory Box, a reaction, a Visit Kit, and the test results.</p>

@@ -1,6 +1,7 @@
 import { ArrowLeft, Loader2, Lock, Plus, Wand2, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { api, ApiError, type Candidate, type Favorite, type FavoriteKind, type LoggedRequest, type Resolution } from "../api";
+import { Notebook } from "../art/scenes";
 import { navigate } from "../router";
 import { Notice } from "../components/Notice";
 import { WhatQlooSees } from "../components/WhatQlooSees";
@@ -271,12 +272,17 @@ export function Intake() {
 
   return (
     <form className="stack" onSubmit={findThem} noValidate>
-      <div>
-        <span className="step-indicator">Step 1 of 2</span>
-        <h1 ref={headingRef} tabIndex={-1}>
-          Tell us about them
-        </h1>
-        <p className="lede">A few things they loved when they were young are enough.</p>
+      <div className="page-hero">
+        <div>
+          <span className="step-indicator">Step 1 of 2</span>
+          <h1 ref={headingRef} tabIndex={-1}>
+            Tell us about them
+          </h1>
+          <p className="lede">A few things they loved when they were young are enough.</p>
+        </div>
+        <div className="page-hero-art">
+          <Notebook />
+        </div>
       </div>
 
       {summaryKey > 0 && Object.keys(errors).length > 0 && (
